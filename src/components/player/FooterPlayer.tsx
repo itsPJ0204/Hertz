@@ -155,67 +155,51 @@ export function FooterPlayer() {
             </div>
 
             {/* --- MINIMIZED MODE --- */}
+            {/* --- MINIMIZED MODE --- */}
             <div
                 className={clsx(
-                    "fixed bottom-0 left-0 right-0 h-24 bg-clay-bg border-t-2 border-black z-[60] flex items-center justify-between px-8 shadow-[0_-4px_10px_rgba(0,0,0,0.1)] cursor-pointer hover:bg-[#eae6db] transition-transform duration-300",
+                    "fixed bottom-0 left-0 right-0 h-24 bg-clay-bg border-t-2 border-black z-[60] flex items-center justify-between px-4 md:px-8 shadow-[0_-4px_10px_rgba(0,0,0,0.1)] cursor-pointer hover:bg-[#eae6db] transition-transform duration-300",
                     isExpanded ? "translate-y-full" : "translate-y-0"
                 )}
                 onClick={() => setIsExpanded(true)}
             >
                 {/* Track Info */}
-                <div className="flex items-center gap-4 w-1/3">
-                    <div className="w-16 h-16 bg-black/10 border-2 border-black flex-shrink-0 relative group">
+                <div className="flex items-center gap-3 md:gap-4 flex-1 overflow-hidden mr-2">
+                    <div className="w-12 h-12 md:w-16 md:h-16 bg-black/10 border-2 border-black flex-shrink-0 relative group">
                         {currentTrack.image && <img src={currentTrack.image} alt={currentTrack.name} className="w-full h-full object-cover" />}
-                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex">
                             <ChevronUp className="text-white" />
                         </div>
                     </div>
-                    <div>
-                        <h3 className="font-bold text-lg truncate leading-tight">{currentTrack.name}</h3>
-                        <p className="text-sm opacity-70 truncate">{currentTrack.artist_name}</p>
+                    <div className="min-w-0">
+                        <h3 className="font-bold text-base md:text-lg truncate leading-tight">{currentTrack.name}</h3>
+                        <p className="text-xs md:text-sm opacity-70 truncate">{currentTrack.artist_name}</p>
                     </div>
                 </div>
 
                 {/* Controls */}
-                <div className="flex flex-col items-center w-1/3 gap-2" onClick={e => e.stopPropagation()}>
-                    <div className="flex items-center gap-6">
-                        <button onClick={prev} className="p-2 hover:scale-110 transition-transform">
+                <div className="flex flex-col items-center justify-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center gap-4">
+                        <button onClick={prev} className="p-2 hover:scale-110 transition-transform hidden md:block">
                             <SkipBack size={24} fill="currentColor" />
                         </button>
                         <button
                             onClick={toggle}
-                            className="w-12 h-12 bg-clay-primary text-white border-2 border-black shadow-[3px_3px_0px_0px_#000000] flex items-center justify-center hover:translate-y-[2px] hover:shadow-[1px_1px_0px_0px_#000000] active:translate-y-[3px] active:shadow-none transition-all"
+                            className="w-10 h-10 md:w-12 md:h-12 bg-clay-primary text-white border-2 border-black shadow-[2px_2px_0px_0px_#000000] md:shadow-[3px_3px_0px_0px_#000000] flex items-center justify-center hover:translate-y-[2px] active:translate-y-[3px] active:shadow-none transition-all"
                         >
-                            {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+                            {isPlaying ? <Pause size={20} fill="currentColor" className="md:w-6 md:h-6" /> : <Play size={20} fill="currentColor" className="md:w-6 md:h-6" />}
                         </button>
                         <button onClick={next} className="p-2 hover:scale-110 transition-transform">
-                            <SkipForward size={24} fill="currentColor" />
+                            <SkipForward size={24} fill="currentColor" className="hidden md:block" />
+                            {/* Mobile Next Button (Smaller/Different?) - actually just show next on mobile too as it's common */}
+                            <SkipForward size={20} fill="currentColor" className="md:hidden" />
                         </button>
-                    </div>
-                    {/* Progress Bar */}
-                    <div className="w-full flex items-center gap-3">
-                        <span className="text-xs font-mono font-bold w-10 text-right">{formatTime(currentTime)}</span>
-                        <div
-                            className="flex-1 h-3 bg-white border-2 border-black rounded-full overflow-hidden relative group cursor-pointer"
-                            onClick={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const x = e.clientX - rect.left;
-                                const p = x / rect.width;
-                                if (duration) seek(p * duration);
-                            }}
-                        >
-                            <div
-                                className="h-full bg-clay-primary absolute top-0 left-0"
-                                style={{ width: `${progress}%` }}
-                            />
-                        </div>
-                        <span className="text-xs font-mono font-bold w-10">{formatTime(duration)}</span>
                     </div>
                 </div>
 
                 {/* Volume / Extra */}
-                <div className="w-1/3 flex justify-end gap-4" onClick={e => e.stopPropagation()}>
-                    <button onClick={toggleMute} className="p-2 hover:bg-black/5 rounded-full" title={isMuted ? "Unmute" : "Mute"}>
+                <div className="flex justify-end gap-2 md:gap-4 shrink-0 w-12 md:w-1/3" onClick={e => e.stopPropagation()}>
+                    <button onClick={toggleMute} className="p-2 hover:bg-black/5 rounded-full hidden md:block" title={isMuted ? "Unmute" : "Mute"}>
                         {isMuted ? <Volume2 size={24} className="text-red-500" /> : <Volume2 size={24} />}
                     </button>
                     <button onClick={() => setIsExpanded(true)} className="p-2 hover:bg-black/5 rounded-full" title="Expand">

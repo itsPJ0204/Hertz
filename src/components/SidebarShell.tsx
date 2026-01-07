@@ -55,6 +55,7 @@ export function SidebarShell({ children }: { children: React.ReactNode }) {
                 flex-1 transition-all duration-300 w-full
                 ${collapsed ? "md:ml-20" : "md:ml-64"}
                 ml-0 
+                pt-16 md:pt-0
             `}>
                 {children}
             </div>
