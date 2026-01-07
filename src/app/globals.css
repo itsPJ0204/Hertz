@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+:root {
+  --background: #E8E4D9;
+  --foreground: #28282B;
+  --clay-bg: #E8E4D9;
+  --clay-primary: #CD4631;
+  --clay-text: #28282B;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-clay-bg: var(--clay-bg);
+  --color-clay-primary: var(--clay-primary);
+  --color-clay-text: var(--clay-text);
+  
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
