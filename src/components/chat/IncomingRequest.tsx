@@ -64,8 +64,8 @@ export function IncomingRequest({ connectionId, sender }: IncomingRequestProps) 
                     <Check size={16} />
                 </div>
                 <div>
-                    <h3 className="font-bold uppercase">Connected!</h3>
-                    <p className="text-sm">You can now chat with {sender.full_name}</p>
+                    <h3 className="font-bold uppercase">Frequency Matched!</h3>
+                    <p className="text-sm">You can now vibe with {sender.full_name}</p>
                 </div>
             </div>
         );
@@ -83,7 +83,7 @@ export function IncomingRequest({ connectionId, sender }: IncomingRequestProps) 
                 </div>
                 <div>
                     <h3 className="font-black uppercase italic text-lg leading-none">{sender.full_name}</h3>
-                    <p className="text-xs font-bold text-gray-500 uppercase">Wants to connect</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase">Wants to Vibe</p>
                 </div>
             </div>
 

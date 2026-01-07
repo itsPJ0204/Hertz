@@ -1,11 +1,12 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { Send, MoreVertical, Phone, Video, User as UserIcon, ChevronLeft } from "lucide-react";
+import { Send, MoreVertical, Phone, Video, User as UserIcon, ChevronLeft, Check, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { markMessagesAsRead } from "@/actions/notifications";
 import { removeConnection } from "@/actions/connections";
+import { ImageModal } from "@/components/ui/ImageModal";
 
 interface ChatWindowProps {
     connectionId: string;
@@ -37,6 +38,7 @@ export function ChatWindow({ connectionId, receiverId, receiverName, receiverAva
     const [newMessage, setNewMessage] = useState("");
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isImageOpen, setIsImageOpen] = useState(false);
     const supabase = createClient();
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -143,9 +145,20 @@ export function ChatWindow({ connectionId, receiverId, receiverName, receiverAva
                     <Link href="/chat" className="hover:text-clay-primary transition-colors">
                         <ChevronLeft size={28} />
                     </Link>
+                    <div
+                        className="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-gray-800 flex-shrink-0 cursor-pointer hover:border-clay-primary transition-colors"
+                        onClick={() => setIsImageOpen(true)}
+                    >
+                        {receiverAvatar ? (
+                            <img src={receiverAvatar} alt={receiverName} className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                                <User size={20} />
+                            </div>
+                        )}
+                    </div>
                     <div>
                         <h2 className="font-black uppercase text-xl leading-none">{receiverName}</h2>
-                        <p className="text-xs text-gray-400 uppercase font-bold tracking-widest">Active Now</p>
                     </div>
                 </div>
                 <div className="flex gap-4 relative">
@@ -188,9 +201,14 @@ export function ChatWindow({ connectionId, receiverId, receiverName, receiverAva
                                     }`}
                             >
                                 <p className="font-bold text-sm">{msg.content}</p>
-                                <p className={`text-[10px] mt-1 font-mono opacity-70 ${isMe ? 'text-white/80' : 'text-gray-500'}`}>
-                                    {formatTimeAgo(msg.created_at)}
-                                </p>
+                                <div className="flex items-center justify-end gap-1 mt-1">
+                                    <p className={`text-[10px] font-mono opacity-70 ${isMe ? 'text-white/80' : 'text-gray-500'}`}>
+                                        {formatTimeAgo(msg.created_at)}
+                                    </p>
+                                    {isMe && msg.is_read && (
+                                        <Check size={12} className="text-orange-300" strokeWidth={4} />
+                                    )}
+                                </div>
                             </div>
                         </div>
                     );
@@ -215,6 +233,13 @@ export function ChatWindow({ connectionId, receiverId, receiverName, receiverAva
                     </button>
                 </div>
             </form>
-        </div>
+
+            <ImageModal
+                src={receiverAvatar || ""}
+                alt={receiverName}
+                isOpen={isImageOpen}
+                onClose={() => setIsImageOpen(false)}
+            />
+        </div >
     );
 }

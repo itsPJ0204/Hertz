@@ -215,7 +215,7 @@ export default function ProfilePage() {
                                 </div>
                                 <div className="bg-clay-bg p-4 border-2 border-black text-center">
                                     <span className="block text-2xl font-black">{stats.matches}</span>
-                                    <span className="text-xs font-bold uppercase opacity-60">Connections</span>
+                                    <span className="text-xs font-bold uppercase opacity-60">Frequencies</span>
                                 </div>
                             </div>
 

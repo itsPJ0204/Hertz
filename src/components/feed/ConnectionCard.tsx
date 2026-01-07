@@ -4,6 +4,7 @@ import { User, MessageCircle, Send, Clock } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
+import { ImageModal } from "@/components/ui/ImageModal";
 
 interface ConnectionProps {
     id: string;
@@ -18,6 +19,7 @@ interface ConnectionProps {
 export function ConnectionCard({ id, name, avatar_url, matchScore, sharedInterests, initialStatus = 'none', currentUserId }: ConnectionProps) {
     const [status, setStatus] = useState(initialStatus);
     const [loading, setLoading] = useState(false);
+    const [isImageOpen, setIsImageOpen] = useState(false);
     const supabase = createClient();
 
     const handleConnect = async () => {
@@ -46,7 +48,10 @@ export function ConnectionCard({ id, name, avatar_url, matchScore, sharedInteres
     return (
         <div className="bg-white border-2 border-black p-6 shadow-[4px_4px_0px_0px_#000000] flex flex-col items-center text-center">
             {/* Avatar with Image Support */}
-            <div className="w-24 h-24 rounded-full border-4 border-black mb-4 flex items-center justify-center bg-gray-100 overflow-hidden relative">
+            <div
+                className="w-24 h-24 rounded-full border-4 border-black mb-4 flex items-center justify-center bg-gray-100 overflow-hidden relative cursor-pointer hover:border-clay-primary transition-colors"
+                onClick={() => setIsImageOpen(true)}
+            >
                 {avatar_url ? (
                     <img
                         src={avatar_url}
@@ -63,6 +68,13 @@ export function ConnectionCard({ id, name, avatar_url, matchScore, sharedInteres
                 {/* Fallback for error */}
                 <User size={40} className="absolute opacity-50 fallback-icon hidden pointer-events-none" />
             </div>
+
+            <ImageModal
+                src={avatar_url || ""}
+                alt={name}
+                isOpen={isImageOpen}
+                onClose={() => setIsImageOpen(false)}
+            />
 
             <h3 className="text-xl font-black uppercase italic">{name}</h3>
             <div className="text-clay-primary font-black text-3xl my-2 tracking-tighter">{matchScore}% MATCH</div>

@@ -60,8 +60,8 @@ export default function LoginPage() {
                 <h1 className="text-3xl font-black text-center mb-2">
                     {isLogin ? "WELCOME BACK" : "JOIN THE FREQ"}
                 </h1>
-                <p className="text-center opacity-60 mb-8">
-                    {isLogin ? "Tune in to your vibe." : "Start your sonic journey."}
+                <p className="text-center opacity-60 mb-8 font-bold italic">
+                    Vibe With Hz
                 </p>
 
                 {error && (

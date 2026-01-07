@@ -53,7 +53,7 @@ export function Sidebar({ collapsed = false, toggle, onCloseMobile }: SidebarPro
         { name: "Liked Songs", href: "/liked", icon: Heart },
         { name: "Secure Studio", href: "/upload", icon: UploadCloud },
         {
-            name: "Messages",
+            name: "My Frequencies",
             href: "/chat",
             icon: MessageCircle,
             badge: counts.messages > 0 ? counts.messages : 0

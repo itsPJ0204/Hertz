@@ -69,7 +69,7 @@ export default async function FeedPage() {
                 </div>
             )}
 
-            <h1 className="text-4xl font-bold mb-8 uppercase italic">Suggested Connections</h1>
+            <h1 className="text-4xl font-bold mb-8 uppercase italic">Find Your Frequency</h1>
 
             {matches.length === 0 ? (
                 <div className="p-8 border-2 border-black bg-white text-center">
