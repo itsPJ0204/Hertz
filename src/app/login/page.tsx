@@ -37,6 +37,7 @@ export default function LoginPage() {
                             full_name: fullName,
                             avatar_url: `https://api.dicebear.com/7.x/adventurer/svg?seed=${Math.random()}`,
                         },
+                        emailRedirectTo: `${window.location.origin}/auth/callback`,
                     },
                 });
                 if (error) throw error;

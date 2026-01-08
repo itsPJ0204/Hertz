@@ -70,23 +70,23 @@ export function Sidebar({ collapsed = false, toggle, onCloseMobile }: SidebarPro
     return (
         <div className={`bg-black text-white h-screen fixed left-0 top-0 flex flex-col transition-all duration-300 z-50 overflow-y-auto no-scrollbar pb-32 ${collapsed ? "w-20 p-4 items-center" : "w-64 p-6"}`}>
             {/* Header / Toggle */}
-            <div className={`mb-10 flex ${collapsed ? "justify-center" : "justify-between items-center"}`}>
+            <div className={`mb-6 md:mb-10 flex ${collapsed ? "justify-center" : "justify-between items-center"}`}>
                 <div className="flex items-center gap-3">
-                    <div className="relative shrink-0 w-16 h-16 flex items-center justify-center overflow-hidden">
+                    <div className="relative shrink-0 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center overflow-hidden">
                         {/* Logo Image */}
                         <img src="/logo_new.png" alt="Hertz Logo" className="w-full h-full object-contain" />
                     </div>
                     {!collapsed && (
                         <div className="flex flex-col leading-none">
-                            <h1 className="text-3xl font-black tracking-tighter italic whitespace-nowrap">HERTZ</h1>
-                            <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase self-end -mt-1 mr-0.5">hz</span>
+                            <h1 className="text-2xl md:text-3xl font-black tracking-tighter italic whitespace-nowrap">HERTZ</h1>
+                            <span className="text-[8px] md:text-[10px] font-bold tracking-widest text-gray-400 uppercase self-end -mt-1 mr-0.5">hz</span>
                         </div>
                     )}
                 </div>
                 {toggle && (
                     <button
                         onClick={toggle}
-                        className={`hover:bg-white/20 p-1 rounded-full bg-black border border-white/20 ${collapsed ? "mt-4" : ""}`}
+                        className={`hidden md:block hover:bg-white/20 p-1 rounded-full bg-black border border-white/20 ${collapsed ? "mt-4" : ""}`}
                         title={collapsed ? "Expand" : "Collapse"}
                     >
                         {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
@@ -104,7 +104,7 @@ export function Sidebar({ collapsed = false, toggle, onCloseMobile }: SidebarPro
                             href={item.href}
                             onClick={() => onCloseMobile && onCloseMobile()}
                             title={collapsed ? item.name : ""}
-                            className={`flex items-center gap-4 p-3 rounded-lg transition-all group relative ${active
+                            className={`flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-lg transition-all group relative ${active
                                 ? "bg-white text-black font-bold shadow-[4px_4px_0px_0px_#444]"
                                 : "hover:bg-white/10 text-gray-300 hover:text-white"
                                 } ${collapsed ? "justify-center" : ""}`}

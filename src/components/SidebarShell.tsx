@@ -13,14 +13,16 @@ export function SidebarShell({ children }: { children: React.ReactNode }) {
     return (
         <div className="flex min-h-screen">
             {/* Mobile Toggle (only visible on small screens) */}
-            <div className="md:hidden fixed top-4 left-4 z-[60]">
-                <button
-                    onClick={() => setMobileOpen(!mobileOpen)}
-                    className="p-2 bg-black text-white rounded-full shadow-lg"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                </button>
-            </div>
+            {!mobileOpen && (
+                <div className="md:hidden fixed top-4 right-4 z-[60]">
+                    <button
+                        onClick={() => setMobileOpen(true)}
+                        className="p-3 bg-black/80 backdrop-blur-md text-white rounded-full shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] border border-white/10 active:translate-y-1 active:shadow-none transition-all"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    </button>
+                </div>
+            )}
 
             {/* Sidebar:
                 - Desktop: Fixed pos, normal behavior.
