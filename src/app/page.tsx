@@ -129,14 +129,14 @@ export default async function Home() {
         {genrePlaylists.length > 0 && (
           <div className="mb-12">
             <h2 className="text-2xl font-black uppercase italic mb-6">Vibe Playlists</h2>
-            <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-hide snap-x">
+            <div className="flex overflow-x-auto gap-4 md:gap-6 pb-6 scrollbar-hide snap-x">
               {genrePlaylists.map(([genre, count]) => (
                 <a
                   key={genre}
                   href={`/playlist/${encodeURIComponent(genre)}?type=genre`}
-                  className="flex-shrink-0 w-64 snap-start group"
+                  className="flex-shrink-0 w-40 md:w-64 snap-start group"
                 >
-                  <div className="bg-black border-4 border-black aspect-square flex flex-col items-center justify-center p-6 shadow-[8px_8px_0px_0px_black] group-hover:shadow-[4px_4px_0px_0px_black] group-hover:translate-x-1 group-hover:translate-y-1 transition-all relative overflow-hidden">
+                  <div className="bg-black border-2 md:border-4 border-black aspect-square flex flex-col items-center justify-center p-4 md:p-6 shadow-[4px_4px_0px_0px_black] md:shadow-[8px_8px_0px_0px_black] group-hover:shadow-[2px_2px_0px_0px_black] group-hover:translate-x-1 group-hover:translate-y-1 transition-all relative overflow-hidden">
                     {/* Background Image */}
                     <div
                       className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-40 transition-opacity grayscale group-hover:grayscale-0"
@@ -147,8 +147,8 @@ export default async function Home() {
 
                     <div className="absolute inset-0 bg-yellow-300 opacity-0 group-hover:opacity-10 transition-opacity mix-blend-overlay" />
 
-                    <h3 className="text-2xl font-black uppercase text-center relative z-10 break-words w-full text-white italic tracking-tighter drop-shadow-lg">{genre}</h3>
-                    <p className="font-bold text-white/80 relative z-10 text-sm mt-1">{count} Tracks</p>
+                    <h3 className="text-lg md:text-2xl font-black uppercase text-center relative z-10 break-words w-full text-white italic tracking-tighter drop-shadow-lg">{genre}</h3>
+                    <p className="font-bold text-white/80 relative z-10 text-xs md:text-sm mt-1">{count} Tracks</p>
                   </div>
                 </a>
               ))}

@@ -48,13 +48,13 @@ export default async function PlaylistPage({ params, searchParams }: { params: P
                     <ArrowLeft /> Back to Discovery
                 </Link>
 
-                <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_black] mb-8">
-                    <div className="flex flex-col md:flex-row items-center gap-8">
+                <div className="bg-white border-2 md:border-4 border-black p-0 md:p-8 shadow-[4px_4px_0px_0px_black] md:shadow-[8px_8px_0px_0px_black] mb-8">
+                    <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 p-6 md:p-0">
                         <PlaylistCover src={heroImage} alt={decodedName} />
-                        <div className="flex-1 text-center md:text-left">
-                            <span className="font-bold uppercase tracking-widest opacity-50 block mb-2">{type === 'language' ? 'Regional Mix' : 'Vibe Playlist'}</span>
-                            <h1 className="text-5xl font-black uppercase italic leading-none mb-4">{decodedName}</h1>
-                            <p className="font-bold opacity-60 mb-6">{songs?.length || 0} Songs • Curated for you</p>
+                        <div className="flex-1 text-center md:text-left min-w-0">
+                            <span className="font-bold uppercase tracking-widest opacity-50 block mb-2 text-xs md:text-sm">{type === 'language' ? 'Regional Mix' : 'Vibe Playlist'}</span>
+                            <h1 className="text-3xl md:text-5xl font-black uppercase italic leading-none mb-4 break-words">{decodedName}</h1>
+                            <p className="font-bold opacity-60 mb-6 text-sm md:text-base">{songs?.length || 0} Songs • Curated for you</p>
 
                             {/* Play Button (Client Component) */}
                             {songs && songs.length > 0 && (
@@ -65,16 +65,16 @@ export default async function PlaylistPage({ params, searchParams }: { params: P
                 </div>
 
                 {/* Song List */}
-                <div className="space-y-4">
+                <div className="space-y-2 md:space-y-4">
                     {songs?.map((song: any, i) => (
-                        <div key={song.id} className="bg-white border-2 border-black p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
-                            <div className="w-8 font-black opacity-30 text-right">{i + 1}</div>
-                            <img src={song.cover_url || "https://placehold.co/40"} className="w-12 h-12 border border-black object-cover" />
-                            <div className="flex-1">
-                                <h3 className="font-bold uppercase truncate">{song.title}</h3>
-                                <p className="text-xs font-bold opacity-50 uppercase">{song.artist}</p>
+                        <div key={song.id} className="bg-white border-2 border-black p-2 md:p-4 flex items-center gap-2 md:gap-4 hover:bg-gray-50 transition-colors">
+                            <div className="hidden md:block w-8 font-black opacity-30 text-right">{i + 1}</div>
+                            <img src={song.cover_url || "https://placehold.co/40"} className="w-10 h-10 md:w-12 md:h-12 border border-black object-cover shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-bold uppercase truncate text-sm md:text-base">{song.title}</h3>
+                                <p className="text-xs font-bold opacity-50 uppercase truncate">{song.artist}</p>
                             </div>
-                            <div className="text-xs font-mono font-bold opacity-50">
+                            <div className="text-xs font-mono font-bold opacity-50 shrink-0">
                                 {Math.floor(song.duration / 60)}:{(song.duration % 60).toString().padStart(2, '0')}
                             </div>
                         </div>

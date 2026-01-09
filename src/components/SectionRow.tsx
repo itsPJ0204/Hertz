@@ -53,14 +53,14 @@ function TrackCard({ track }: { track: Track }) {
 
     return (
         <div
-            className="min-w-[200px] w-[200px] bg-white border-2 border-black flex-shrink-0 snap-center group hover:translate-y-[-4px] transition-transform shadow-[4px_4px_0px_0px_black]"
+            className="w-[140px] min-w-[140px] md:w-[180px] md:min-w-[180px] bg-white border-2 border-black flex-shrink-0 snap-center group hover:-translate-y-1 transition-transform shadow-[2px_2px_0px_0px_black] md:shadow-[2px_2px_0px_0px_black] hover:shadow-[4px_4px_0px_0px_black]"
         >
             {/* Image */}
             <div className="relative aspect-square border-b-2 border-black overflow-hidden bg-gray-100">
                 <img
                     src={track.image}
                     alt={track.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 {/* Play Overlay */}
                 <button
@@ -70,21 +70,21 @@ function TrackCard({ track }: { track: Track }) {
                             musicinfo: track.musicinfo || { tags: { genres: ['Unknown'], instruments: [], vartags: [] } }
                         });
                     }}
-                    className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                    className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
                 >
-                    <div className="bg-clay-primary border-2 border-black p-3 rounded-full shadow-[2px_2px_0px_0px_white] hover:scale-110 transition-transform">
-                        <Play size={24} fill="black" />
+                    <div className="bg-clay-primary border-2 border-black p-2 md:p-3 rounded-full shadow-[2px_2px_0px_0px_white] hover:scale-110 transition-transform">
+                        <Play size={20} fill="black" />
                     </div>
                 </button>
             </div>
 
             {/* Info */}
-            <div className="p-3">
-                <h3 className="font-bold text-sm truncate leading-tight mb-1" title={track.name}>{track.name}</h3>
-                <p className="text-xs font-bold opacity-60 truncate">{track.artist_name}</p>
+            <div className="p-2 md:p-3">
+                <h3 className="font-bold text-xs md:text-sm truncate leading-tight mb-1" title={track.name}>{track.name}</h3>
+                <p className="text-[10px] md:text-xs font-bold opacity-60 truncate">{track.artist_name}</p>
 
-                <div className="mt-3 flex justify-between items-center z-10 relative">
-                    <span className="text-[10px] font-mono border border-black/20 px-1 rounded">
+                <div className="mt-2 md:mt-3 flex justify-between items-center z-10 relative">
+                    <span className="text-[10px] font-mono border border-black/20 px-1 rounded bg-gray-50">
                         {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
                     </span>
                     {/* Mini Actions */}
@@ -93,7 +93,7 @@ function TrackCard({ track }: { track: Track }) {
                             onClick={(e) => { e.stopPropagation(); handleLike(); }}
                             className={`transition-colors hover:scale-110 active:scale-95 ${isLiked ? "text-red-500 fill-red-500" : "text-black hover:text-red-500"}`}
                         >
-                            <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
+                            <Heart size={14} fill={isLiked ? "currentColor" : "none"} />
                         </button>
                     </div>
                 </div>
