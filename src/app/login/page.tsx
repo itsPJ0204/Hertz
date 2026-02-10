@@ -41,7 +41,8 @@ export default function LoginPage() {
                     },
                 });
                 if (error) throw error;
-                alert("Check your email for the confirmation link!");
+                alert("User created successfully. Please login.");
+                setIsLogin(true);
             }
         } catch (err: any) {
             setError(err.message);
