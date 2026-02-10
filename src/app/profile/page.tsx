@@ -59,10 +59,18 @@ export default function ProfilePage() {
                 .eq('id', user.id)
                 .single();
 
-            if (error) throw error;
-            const profileData = data as Profile;
-            setProfile(profileData);
-            setTempName(profileData.full_name || "");
+            if (error && error.code !== 'PGRST116') throw error;
+            if (error && error.code !== 'PGRST116') throw error;
+
+            if (data) {
+                const profileData = data as Profile;
+                setProfile(profileData);
+                setTempName(profileData.full_name || "");
+            } else {
+                // New user - initialize with ID so they can save
+                setProfile({ id: user.id });
+                setTempName(user.user_metadata?.full_name || "");
+            }
 
             // Fetch Stats concurrently
             const [likesRes, matchesRes] = await Promise.all([
@@ -89,8 +97,9 @@ export default function ProfilePage() {
         if (!tempName.trim() || !profile) return;
         try {
             const { error } = await (supabase.from('profiles') as any)
-                .update({ full_name: tempName })
-                .eq('id', user.id);
+                .upsert({ id: user.id, full_name: tempName, updated_at: new Date().toISOString() })
+                .select()
+                .single();
 
             if (error) throw error;
 
@@ -125,8 +134,9 @@ export default function ProfilePage() {
             const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
 
             const { error: updateError } = await (supabase.from('profiles') as any)
-                .update({ avatar_url: publicUrl })
-                .eq('id', user.id);
+                .upsert({ id: user.id, avatar_url: publicUrl, updated_at: new Date().toISOString() })
+                .select()
+                .single();
 
             if (updateError) {
                 throw updateError;

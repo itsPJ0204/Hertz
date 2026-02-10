@@ -10,6 +10,20 @@ export default async function Home() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Redirect to profile creation if user exists but has no profile
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile) {
+      const { redirect } = await import("next/navigation");
+      redirect("/profile");
+    }
+  }
+
   // 0. Fetch User Likes (for "isLiked" status)
   let userLikes = new Set<string>();
   if (user) {
