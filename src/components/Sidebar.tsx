@@ -22,12 +22,27 @@ export function Sidebar({ collapsed = false, toggle, onCloseMobile }: SidebarPro
     const router = useRouter();
     const supabase = createClient();
     const [counts, setCounts] = useState<UnreadCounts>({ messages: 0, matches: 0, notifications: 0 });
+    const [spotifyLinked, setSpotifyLinked] = useState(false);
 
     const isActive = (path: string) => pathname === path;
 
     useEffect(() => {
         // Initial Fetch
         getUnreadCounts().then(setCounts);
+        fetch('/api/auth/spotify/status')
+            .then(res => {
+                if (!res.ok) throw new Error('Status check failed');
+                const contentType = res.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    throw new Error("Received non-JSON response");
+                }
+                return res.json();
+            })
+            .then(data => setSpotifyLinked(data.linked))
+            .catch(err => {
+                // Silently fail - likely unauthenticated or redirecting
+                // console.error("Failed to fetch spotify status", err)
+            });
 
         // Poll every 3 seconds for updates
         const interval = setInterval(() => {
@@ -65,6 +80,10 @@ export function Sidebar({ collapsed = false, toggle, onCloseMobile }: SidebarPro
         await supabase.auth.signOut();
         router.refresh();
         router.push("/login");
+    };
+
+    const handleSpotifyLink = () => {
+        window.location.href = "/api/auth/spotify/login";
     };
 
     return (
@@ -130,6 +149,33 @@ export function Sidebar({ collapsed = false, toggle, onCloseMobile }: SidebarPro
                         </Link>
                     )
                 })}
+
+                {/* Spotify Link Button */}
+                <div className="pt-4 border-t border-gray-800 mt-4">
+                    {spotifyLinked ? (
+                        <div className={`flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-lg bg-green-900/20 text-green-400 group relative ${collapsed ? "justify-center" : ""}`}>
+                            <div className="relative">
+                                <span className="text-xl">✅</span>
+                            </div>
+                            {!collapsed && (
+                                <span className="uppercase text-sm tracking-wide whitespace-nowrap font-bold">Spotify Linked</span>
+                            )}
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleSpotifyLink}
+                            title={collapsed ? "Link Spotify" : ""}
+                            className={`w-full flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-lg transition-all group relative hover:bg-green-600/10 text-gray-300 hover:text-green-400 ${collapsed ? "justify-center" : ""}`}
+                        >
+                            <div className="relative">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 group-hover:scale-110 transition-transform"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path><path d="M12 8v8"></path></svg>
+                            </div>
+                            {!collapsed && (
+                                <span className="uppercase text-sm tracking-wide whitespace-nowrap">Link Spotify</span>
+                            )}
+                        </button>
+                    )}
+                </div>
             </nav>
 
             {/* AdSense Unit */}

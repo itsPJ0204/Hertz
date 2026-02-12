@@ -1,12 +1,6 @@
-export type Json =
-    | string
-    | number
-    | boolean
-    | null
-    | { [key: string]: Json | undefined }
-    | Json[]
+export type Json = any;
 
-export interface Database {
+export type Database = {
     public: {
         Tables: {
             profiles: {
@@ -149,6 +143,32 @@ export interface Database {
                     content?: string
                     is_read?: boolean | null
                     created_at?: string
+                }
+            }
+            user_music_profiles: {
+                Row: {
+                    user_id: string
+                    top_artists: Json
+                    top_genres: Json
+                    genre_vector: Json
+                    is_spotify_linked: boolean
+                    last_updated: string
+                }
+                Insert: {
+                    user_id: string
+                    top_artists?: Json
+                    top_genres?: Json
+                    genre_vector?: Json
+                    is_spotify_linked?: boolean
+                    last_updated?: string
+                }
+                Update: {
+                    user_id?: string
+                    top_artists?: Json
+                    top_genres?: Json
+                    genre_vector?: Json
+                    is_spotify_linked?: boolean
+                    last_updated?: string
                 }
             }
         }

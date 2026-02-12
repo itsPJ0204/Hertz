@@ -27,7 +27,9 @@ export default function LoginPage() {
                     password,
                 });
                 if (error) throw error;
-                router.push("/");
+                // Force a hard navigation to ensure cookies are sent to the server
+                // and middleware can see the new session immediately.
+                window.location.href = "/";
             } else {
                 const { error } = await supabase.auth.signUp({
                     email,
@@ -96,6 +98,7 @@ export default function LoginPage() {
                             className="w-full border-2 border-black p-3 font-medium focus:outline-none focus:shadow-[4px_4px_0px_0px_#000000] focus:-translate-y-1 transition-all"
                             placeholder="ALEX@EXAMPLE.COM"
                             required
+                            suppressHydrationWarning
                         />
                     </div>
 
@@ -108,6 +111,7 @@ export default function LoginPage() {
                             className="w-full border-2 border-black p-3 font-medium focus:outline-none focus:shadow-[4px_4px_0px_0px_#000000] focus:-translate-y-1 transition-all"
                             placeholder="••••••••"
                             required
+                            suppressHydrationWarning
                         />
                     </div>
 

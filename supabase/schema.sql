@@ -81,5 +81,34 @@ $$ language plpgsql security definer;
 
 -- Trigger the function on auth.users insert
 create trigger on_auth_user_created
-  after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- USER MUSIC PROFILES (Spotify Data)
+create table if not exists public.user_music_profiles (
+  user_id uuid references auth.users(id) on delete cascade primary key,
+  top_artists jsonb,
+  top_genres jsonb,
+  genre_vector jsonb,
+  is_spotify_linked boolean default false,
+  last_updated timestamp with time zone default timezone('utc'::text, now())
+);
+
+-- Enable RLS for music profiles
+alter table public.user_music_profiles enable row level security;
+
+-- Policies for music profiles
+create policy "Users can view their own music profile"
+  on public.user_music_profiles for select
+  using (auth.uid() = user_id);
+
+create policy "Users can update their own music profile"
+  on public.user_music_profiles for update
+  using (auth.uid() = user_id);
+
+create policy "Users can insert their own music profile"
+  on public.user_music_profiles for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can view other users' music profiles"
+  on public.user_music_profiles for select
+  using (true);

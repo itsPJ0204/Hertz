@@ -1,48 +1,65 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-    let supabaseResponse = NextResponse.next({
-        request,
-    })
+    // 1. Define the protected routes logic
+    // We allow public access to:
+    // - / (Landing Page)
+    // - /login (Login Page)
+    // - /auth/* (Auth endpoints)
+    // - /_next/* (Next.js internals)
+    // - /favicon.ico, images, etc. (handled by matcher in src/middleware.ts, but good to be safe)
 
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                getAll() {
-                    return request.cookies.getAll()
-                },
-                setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) => {
-                        request.cookies.set(name, value)
-                        supabaseResponse.cookies.set(name, value, options)
-                    })
-                },
-            },
-        }
-    )
+    const path = request.nextUrl.pathname;
+    const isPublic =
+        path === '/' ||
+        path.startsWith('/login') ||
+        path.startsWith('/auth') ||
+        path.startsWith('/_next') ||
+        path.match(/\.(?:svg|png|jpg|jpeg|gif|webp|ico)$/);
 
-    // Do not run code between createServerClient and
-    // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-    // issues with users being randomly logged out.
-
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
-
-    if (
-        !user &&
-        !request.nextUrl.pathname.startsWith('/login') &&
-        !request.nextUrl.pathname.startsWith('/auth') &&
-        !request.nextUrl.pathname.startsWith('/') // Landing page public
-    ) {
-        // no user, potentially respond by redirecting the user to the login page
-        const url = request.nextUrl.clone()
-        url.pathname = '/login'
-        return NextResponse.redirect(url)
+    if (isPublic) {
+        return NextResponse.next();
     }
 
-    return supabaseResponse
+    // 2. Check for Supabase session cookies
+    // We do NOT use createServerClient or getUser() here to avoid:
+    // - Infinite refresh loops
+    // - "Invalid Refresh Token" crashes
+    // - Unnecessary latency on every request
+
+    // Attempt to derive the cookie name from the URL
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    let projectRef = '';
+    if (supabaseUrl) {
+        try {
+            const url = new URL(supabaseUrl);
+            // standardized supabase url is https://<project-ref>.supabase.co
+            projectRef = url.hostname.split('.')[0];
+        } catch (e) {
+            // fallback generic
+        }
+    }
+
+    // Common Supabase cookie patterns
+    const cookieName = `sb-${projectRef}-auth-token`;
+
+    // Check for session cookies (including chunked ones like ...-token.0)
+    const allCookies = request.cookies.getAll();
+    const hasSessionCookie = allCookies.some(c =>
+        c.name.startsWith(cookieName) ||
+        c.name.startsWith('sb-access-token') ||
+        c.name.startsWith('sb-refresh-token')
+    );
+
+    // 3. Redirect if no session found on protected route
+    if (!hasSessionCookie) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/login';
+        url.searchParams.set('next', path); // Useful for redirecting back after login
+        return NextResponse.redirect(url);
+    }
+
+    // 4. Session cookie exists -> Allow request to proceed
+    // Verification of the token will happen in Server Components / API routes via getUser()
+    return NextResponse.next();
 }
