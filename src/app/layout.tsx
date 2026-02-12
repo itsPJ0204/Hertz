@@ -21,6 +21,8 @@ import { PlayerProvider } from "@/components/player/PlayerContext";
 import { FooterPlayer } from "@/components/player/FooterPlayer";
 import { SidebarShell } from "@/components/SidebarShell";
 
+import { NotificationsList } from "@/components/NotificationsList";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -38,6 +40,7 @@ export default function RootLayout({
             </div>
           </SidebarShell>
           <FooterPlayer />
+          <NotificationsList />
         </PlayerProvider>
         <script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID}`} crossOrigin="anonymous"></script>
       </body>

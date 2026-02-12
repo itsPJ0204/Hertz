@@ -1,4 +1,3 @@
-import { ConnectionCard } from "@/components/feed/ConnectionCard";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -6,6 +5,7 @@ import { getTopMatches } from "@/lib/matching";
 import { redirect } from "next/navigation";
 
 import { IncomingRequest } from "@/components/chat/IncomingRequest";
+import { FeedClient } from "../../components/feed/FeedClient";
 
 export default async function FeedPage() {
     const supabase = await createClient();
@@ -47,6 +47,12 @@ export default async function FeedPage() {
         });
     }
 
+    // Filter out users who are already connected or pending
+    const filteredMatches = matches.filter(m => {
+        const status = connectionMap.get(m.id);
+        return status !== 'connected' && status !== 'pending';
+    });
+
     return (
         <div className="min-h-screen p-8 pb-32">
             <Link href="/" className="inline-flex items-center gap-2 font-bold mb-8 hover:underline">
@@ -69,25 +75,7 @@ export default async function FeedPage() {
                 </div>
             )}
 
-            <h1 className="text-4xl font-bold mb-8 uppercase italic">Find Your Frequency</h1>
-
-            {matches.length === 0 ? (
-                <div className="p-8 border-2 border-black bg-white text-center">
-                    <h3 className="text-xl font-bold mb-2">No Matches Yet</h3>
-                    <p>Listen to more music to build your vibe profile!</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {matches.map(m => (
-                        <ConnectionCard
-                            key={m.id}
-                            {...m}
-                            currentUserId={user.id}
-                            initialStatus={connectionMap.get(m.id) || 'none'}
-                        />
-                    ))}
-                </div>
-            )}
+            <FeedClient matches={filteredMatches} />
         </div>
     );
 }

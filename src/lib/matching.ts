@@ -62,6 +62,8 @@ export interface MatchedUser {
     name: string;
     avatar_url: string;
     matchScore: number;
+    vibeScore?: number;
+    spotifyScore?: number;
     sharedInterests: string[];
 }
 
@@ -83,21 +85,83 @@ export async function getTopMatches(currentUserId: string): Promise<MatchedUser[
 
     // 2. Calculate match score for each
     for (const user of users) {
-        const score = await getVibeMatchScore(currentUserId, user.id);
-        console.log(`[Matching] Comparing with ${user.full_name}: Score = ${score}`);
+        // Vibe Score (Listening History)
+        const vibeScore = await getVibeMatchScore(currentUserId, user.id);
 
-        // Only include if > 10% match for testing (70% in prod)
-        if (score > 0.1) {
+        // Spotify Score (Profile Data)
+        const spotifyScore = await getSpotifyMatchScore(currentUserId, user.id);
+
+        console.log(`[Matching] Comparing with ${user.full_name}: Vibe=${vibeScore}, Spotify=${spotifyScore}`);
+
+        // Include if either score is relevant
+        // For Spotify Matches, we want strict > 0.8 (80%)
+        // For Vibe Matches, we keep the existing > 0.1 threshold
+
+        if (vibeScore > 0.1 || spotifyScore > 0.1) {
             matches.push({
                 id: user.id,
                 name: user.full_name || 'Anonymous',
                 avatar_url: user.avatar_url || '',
-                matchScore: Math.round(score * 100),
-                sharedInterests: ['Shared Vibe'] // Logic to compute intersection can be added here
+                matchScore: Math.round(Math.max(vibeScore, spotifyScore) * 100), // Use highest for generic display
+                vibeScore: Math.round(vibeScore * 100),
+                spotifyScore: Math.round(spotifyScore * 100),
+                sharedInterests: ['Shared Vibe'] // detailed shared interests logic to be added
             });
         }
     }
 
     console.log(`[Matching] Found ${matches.length} matches for User ${currentUserId}`);
-    return matches.sort((a, b) => b.matchScore - a.matchScore);
+    // Sort by highest overall score
+    return matches.sort((a, b) => Math.max(b.vibeScore || 0, b.spotifyScore || 0) - Math.max(a.vibeScore || 0, a.spotifyScore || 0));
+}
+
+export async function getSpotifyMatchScore(userIdA: string, userIdB: string): Promise<number> {
+    const supabase = await createClient();
+
+    const { data: profiles } = await supabase
+        .from('user_music_profiles')
+        .select('user_id, genre_vector, top_artists')
+        .in('user_id', [userIdA, userIdB]);
+
+    if (!profiles || profiles.length !== 2) return 0;
+
+    const profileA = profiles.find(p => p.user_id === userIdA);
+    const profileB = profiles.find(p => p.user_id === userIdB);
+
+    if (!profileA || !profileB) return 0;
+
+    // 1. Cosine Similarity for Genre Vectors
+    const vecA = profileA.genre_vector || {};
+    const vecB = profileB.genre_vector || {};
+
+    const genres = new Set([...Object.keys(vecA), ...Object.keys(vecB)]);
+    let dotProduct = 0;
+    let magnitudeA = 0;
+    let magnitudeB = 0;
+
+    genres.forEach(genre => {
+        const valA = vecA[genre] || 0;
+        const valB = vecB[genre] || 0;
+        dotProduct += valA * valB;
+        magnitudeA += valA * valA;
+        magnitudeB += valB * valB;
+    });
+
+    const genreSimilarity = (magnitudeA && magnitudeB)
+        ? dotProduct / (Math.sqrt(magnitudeA) * Math.sqrt(magnitudeB))
+        : 0;
+
+    // 2. Jaccard Index for Top Artists
+    const artistsA = new Set((profileA.top_artists as any[])?.map(a => a.name) || []);
+    const artistsB = new Set((profileB.top_artists as any[])?.map(a => a.name) || []);
+
+    let artistSimilarity = 0;
+    if (artistsA.size > 0 && artistsB.size > 0) {
+        const intersection = new Set([...artistsA].filter(x => artistsB.has(x)));
+        const union = new Set([...artistsA, ...artistsB]);
+        artistSimilarity = intersection.size / union.size;
+    }
+
+    // Weighted Score: 60% Genre, 40% Artists
+    return (genreSimilarity * 0.6) + (artistSimilarity * 0.4);
 }
