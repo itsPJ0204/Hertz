@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     ];
 
     const state = 'some-state-of-my-choice'; // TODO: Generate random string for security
-    const authorizeURL = spotifyApi.createAuthorizeURL(scopes, state);
+    const authorizeURL = spotifyApi.createAuthorizeURL(scopes, state, true);
 
     return NextResponse.redirect(authorizeURL);
 }
