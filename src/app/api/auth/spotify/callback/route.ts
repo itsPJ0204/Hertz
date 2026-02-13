@@ -38,12 +38,7 @@ export async function GET(request: Request) {
         spotifyApi.setRefreshToken(refresh_token);
 
         // Fetch User Data (Resilient)
-        let processedProfile = {
-            top_artists: [] as any[],
-            top_genres: [] as any[],
-            genre_vector: {} as Record<string, number>
-        };
-        let dataErrorDetails = '';
+
 
         // Fetch User Data with Granular Logging
         let processedProfile = {
