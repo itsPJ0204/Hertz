@@ -151,12 +151,7 @@ export async function GET(request: Request) {
             return NextResponse.redirect(new URL('/profile?error=db_save_failed', request.url));
         }
 
-        let redirectUrl = '/profile?spotify=connected';
-        if (dataErrorDetails) {
-            redirectUrl += `&data_error=${encodeURIComponent(dataErrorDetails)}`;
-        }
-
-        return NextResponse.redirect(new URL(redirectUrl, request.url));
+        return NextResponse.redirect(new URL('/profile?spotify=connected', request.url));
 
     } catch (err: any) {
         console.error('Error in Spotify Callback:', err);
