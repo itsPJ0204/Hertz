@@ -112,8 +112,10 @@ export async function GET(request: Request) {
             errorDetails = 'failed_to_stringify_error';
         }
 
-        // Append Status Code if available (common in spotify-web-api-node)
-        if (err.statusCode) {
+        // Append Status Code if available
+        if (err.statusCode === 403) {
+            errorDetails = 'USER_NOT_ON_WHITELIST';
+        } else if (err.statusCode) {
             errorDetails = `[${err.statusCode}] ${errorDetails}`;
         }
 
