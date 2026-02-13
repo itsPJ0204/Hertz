@@ -136,8 +136,14 @@ export async function GET(request: Request) {
         }
 
         // Validate Data Presence
+        console.log('processedProfile Stats:', {
+            artistCount: processedProfile.top_artists.length,
+            genreCount: processedProfile.top_genres.length,
+            vectorSize: Object.keys(processedProfile.genre_vector).length
+        });
+
         const hasValidMusicData =
-            processedProfile.top_artists.length > 0 &&
+            processedProfile.top_artists.length > 0 ||
             Object.keys(processedProfile.genre_vector).length > 0;
 
         if (!hasValidMusicData) {
