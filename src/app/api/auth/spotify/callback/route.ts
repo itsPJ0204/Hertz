@@ -83,8 +83,12 @@ export async function GET(request: Request) {
 
         return NextResponse.redirect(new URL('/profile?spotify=connected', request.url));
 
-    } catch (err) {
+    } catch (err: any) {
         console.error('Something went wrong!', err);
-        return NextResponse.redirect(new URL('/profile?error=spotify_callback_failed', request.url));
+        const errorMessage = err.message ? encodeURIComponent(err.message) : 'unknown_error';
+        // Also check specifics like "Invalid redirect URI" which often comes in body
+        const detailedError = err.body?.error_description || err.body?.error || errorMessage;
+
+        return NextResponse.redirect(new URL(`/profile?error=spotify_callback_failed&details=${encodeURIComponent(detailedError)}`, request.url));
     }
 }
