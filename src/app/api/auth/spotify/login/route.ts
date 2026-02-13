@@ -11,11 +11,10 @@ export async function GET(request: Request) {
         redirectUri,
     });
 
-    const scopes = [
-        'user-read-private',
+    'user-read-private',
         'user-read-email',
-        'user-top-read', // Essential for taste profile
-    ];
+        'user-top-read',
+        'user-library-read', // Fallback for free accounts
 
     const state = 'some-state-of-my-choice'; // TODO: Generate random string for security
     const authorizeURL = spotifyApi.createAuthorizeURL(scopes, state);

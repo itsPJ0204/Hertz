@@ -50,29 +50,66 @@ export async function GET(request: Request) {
             const topTracks = await spotifyApi.getMyTopTracks({ limit: 50, time_range: 'medium_term' });
             processedProfile = processSpotifyData(topArtists.body.items, topTracks.body.items);
         } catch (dataErr: any) {
-            console.error('Failed to fetch Spotify data:', dataErr);
+            console.error('Failed to fetch Spotify Top Data (likely Premium restricted). Attempting Fallback...', dataErr);
 
+            // FALLBACK STRATEGY: Saved Tracks
+            // If we can't get "Top" data, we use "Saved Tracks" (Library) which is usually free.
             try {
-                if (dataErr.body) {
-                    if (dataErr.body.error_description) dataErrorDetails = dataErr.body.error_description;
-                    else if (dataErr.body.error) {
-                        dataErrorDetails = typeof dataErr.body.error === 'object' ? JSON.stringify(dataErr.body.error) : String(dataErr.body.error);
-                    }
+                // 1. Fetch Saved Tracks
+                const savedTracks = await spotifyApi.getMySavedTracks({ limit: 50 });
+
+                // 2. Extract Artist IDs from tracks
+                // We need to fetch artists directly because Track objects don't have Genres.
+                const artistIds = new Set<string>();
+                const trackObjects: any[] = [];
+
+                savedTracks.body.items.forEach(item => {
+                    trackObjects.push(item.track);
+                    item.track.artists.forEach(a => artistIds.add(a.id));
+                });
+
+                // 3. Fetch Full Artist Details (for Genres)
+                // Spotify allows max 50 IDs per call
+                const artistIdArray = Array.from(artistIds).slice(0, 50);
+                let fullArtists: any[] = [];
+
+                if (artistIdArray.length > 0) {
+                    const artistsResponse = await spotifyApi.getArtists(artistIdArray);
+                    fullArtists = artistsResponse.body.artists;
                 }
 
-                if (!dataErrorDetails) {
-                    if (dataErr.message && dataErr.message !== '[object Object]') {
-                        dataErrorDetails = dataErr.message;
-                    } else {
-                        dataErrorDetails = JSON.stringify(dataErr, Object.getOwnPropertyNames(dataErr));
-                    }
-                }
-            } catch (e) {
-                dataErrorDetails = 'failed_to_stringify_data_error';
-            }
+                // 4. Process Data using our existing function
+                // We pass empty "topArtists" because we are synthesizing them from the library
+                // effectively treating the library artists as the "top" artists for this profile.
+                processedProfile = processSpotifyData(fullArtists, trackObjects);
 
-            if (dataErr.statusCode) {
-                dataErrorDetails = `[${dataErr.statusCode}] ${dataErrorDetails}`;
+                console.log('Fallback successful: Created profile from Saved Tracks');
+
+            } catch (fallbackErr: any) {
+                console.error('Fallback failed:', fallbackErr);
+                // Capture original error logic for debugging
+                try {
+                    if (dataErr.body) {
+                        if (dataErr.body.error_description) dataErrorDetails = dataErr.body.error_description;
+                        else if (dataErr.body.error) {
+                            dataErrorDetails = typeof dataErr.body.error === 'object' ? JSON.stringify(dataErr.body.error) : String(dataErr.body.error);
+                        }
+                    }
+
+                    if (!dataErrorDetails) {
+                        if (dataErr.message && dataErr.message !== '[object Object]') {
+                            dataErrorDetails = dataErr.message;
+                        } else {
+                            dataErrorDetails = JSON.stringify(dataErr, Object.getOwnPropertyNames(dataErr));
+                        }
+                    }
+                } catch (e) {
+                    dataErrorDetails = 'failed_to_stringify_data_error';
+                }
+
+                if (dataErr.statusCode) {
+                    dataErrorDetails = `[${dataErr.statusCode}] ${dataErrorDetails}`;
+                }
             }
         }
 
