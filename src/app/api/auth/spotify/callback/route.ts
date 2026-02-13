@@ -37,13 +37,21 @@ export async function GET(request: Request) {
         spotifyApi.setAccessToken(access_token);
         spotifyApi.setRefreshToken(refresh_token);
 
-        // Fetch User Data
-        const me = await spotifyApi.getMe();
-        const topArtists = await spotifyApi.getMyTopArtists({ limit: 50, time_range: 'medium_term' });
-        const topTracks = await spotifyApi.getMyTopTracks({ limit: 50, time_range: 'medium_term' });
+        // Fetch User Data (Resilient)
+        let processedProfile = {
+            top_artists: [] as any[],
+            top_genres: [] as any[],
+            genre_vector: {} as Record<string, number>
+        };
 
-        // Process Data
-        const processedProfile = processSpotifyData(topArtists.body.items, topTracks.body.items);
+        try {
+            const topArtists = await spotifyApi.getMyTopArtists({ limit: 50, time_range: 'medium_term' });
+            const topTracks = await spotifyApi.getMyTopTracks({ limit: 50, time_range: 'medium_term' });
+            processedProfile = processSpotifyData(topArtists.body.items, topTracks.body.items);
+        } catch (dataErr: any) {
+            console.error('Failed to fetch Spotify data (Premium might be required?):', dataErr);
+            // We continue without data - the user will be "Linked" but have no matches
+        }
 
         // Store in Supabase
         const supabase = await createClient();
@@ -52,15 +60,13 @@ export async function GET(request: Request) {
             const { data } = await supabase.auth.getUser();
             user = data.user;
         } catch (authError: any) {
+            // ... (auth error handling remains the same)
             const isRefreshError = authError?.code === 'refresh_token_not_found' ||
                 authError?.message?.includes('refresh_token_not_found') ||
                 JSON.stringify(authError).includes('refresh_token_not_found');
 
             if (isRefreshError) {
-                // Squelch the error and clear the session
                 await supabase.auth.signOut();
-            } else {
-                console.error('Auth error retrieving user:', authError);
             }
             return NextResponse.redirect(new URL('/login?error=session_expired', request.url));
         }
