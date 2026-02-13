@@ -43,14 +43,21 @@ export async function GET(request: Request) {
             top_genres: [] as any[],
             genre_vector: {} as Record<string, number>
         };
+        let dataErrorDetails = '';
 
         try {
             const topArtists = await spotifyApi.getMyTopArtists({ limit: 50, time_range: 'medium_term' });
             const topTracks = await spotifyApi.getMyTopTracks({ limit: 50, time_range: 'medium_term' });
             processedProfile = processSpotifyData(topArtists.body.items, topTracks.body.items);
         } catch (dataErr: any) {
-            console.error('Failed to fetch Spotify data (Premium might be required?):', dataErr);
-            // We continue without data - the user will be "Linked" but have no matches
+            console.error('Failed to fetch Spotify data:', dataErr);
+            if (dataErr.body?.error?.message) {
+                dataErrorDetails = dataErr.body.error.message;
+            } else if (dataErr.message) {
+                dataErrorDetails = dataErr.message;
+            } else {
+                dataErrorDetails = 'unknown_data_fetch_error';
+            }
         }
 
         // Store in Supabase
@@ -91,7 +98,12 @@ export async function GET(request: Request) {
             return NextResponse.redirect(new URL('/profile?error=db_save_failed', request.url));
         }
 
-        return NextResponse.redirect(new URL('/profile?spotify=connected', request.url));
+        let redirectUrl = '/profile?spotify=connected';
+        if (dataErrorDetails) {
+            redirectUrl += `&data_error=${encodeURIComponent(dataErrorDetails)}`;
+        }
+
+        return NextResponse.redirect(new URL(redirectUrl, request.url));
 
     } catch (err: any) {
         console.error('Error in Spotify Callback:', err);
