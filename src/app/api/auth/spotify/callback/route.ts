@@ -51,12 +51,28 @@ export async function GET(request: Request) {
             processedProfile = processSpotifyData(topArtists.body.items, topTracks.body.items);
         } catch (dataErr: any) {
             console.error('Failed to fetch Spotify data:', dataErr);
-            if (dataErr.body?.error?.message) {
-                dataErrorDetails = dataErr.body.error.message;
-            } else if (dataErr.message) {
-                dataErrorDetails = dataErr.message;
-            } else {
-                dataErrorDetails = 'unknown_data_fetch_error';
+
+            try {
+                if (dataErr.body) {
+                    if (dataErr.body.error_description) dataErrorDetails = dataErr.body.error_description;
+                    else if (dataErr.body.error) {
+                        dataErrorDetails = typeof dataErr.body.error === 'object' ? JSON.stringify(dataErr.body.error) : String(dataErr.body.error);
+                    }
+                }
+
+                if (!dataErrorDetails) {
+                    if (dataErr.message && dataErr.message !== '[object Object]') {
+                        dataErrorDetails = dataErr.message;
+                    } else {
+                        dataErrorDetails = JSON.stringify(dataErr, Object.getOwnPropertyNames(dataErr));
+                    }
+                }
+            } catch (e) {
+                dataErrorDetails = 'failed_to_stringify_data_error';
+            }
+
+            if (dataErr.statusCode) {
+                dataErrorDetails = `[${dataErr.statusCode}] ${dataErrorDetails}`;
             }
         }
 
