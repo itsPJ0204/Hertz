@@ -19,6 +19,10 @@ export async function GET(request: Request) {
     const { origin } = new URL(request.url);
     const redirectUri = `${origin}/api/auth/spotify/callback`;
 
+    if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
+        return NextResponse.redirect(new URL('/profile?error=spotify_callback_failed&details=MISSING_ENV_REC_VARS', request.url));
+    }
+
     const spotifyApi = new SpotifyWebApi({
         clientId: process.env.SPOTIFY_CLIENT_ID,
         clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
@@ -88,18 +92,29 @@ export async function GET(request: Request) {
 
         let errorDetails = 'unknown_error';
         try {
-            if (err.body?.error_description) {
-                errorDetails = err.body.error_description;
-            } else if (err.body?.error) {
-                // Spotify sometimes returns objects in error field
-                errorDetails = typeof err.body.error === 'object' ? JSON.stringify(err.body.error) : String(err.body.error);
-            } else if (err.message) {
-                errorDetails = err.message;
-            } else {
-                errorDetails = JSON.stringify(err);
+            // Check for specific Spotify error body shapes
+            if (err.body) {
+                if (err.body.error_description) errorDetails = err.body.error_description;
+                else if (err.body.error) {
+                    errorDetails = typeof err.body.error === 'object' ? JSON.stringify(err.body.error) : String(err.body.error);
+                }
+            }
+
+            // If still unknown, check message or serialize full object
+            if (errorDetails === 'unknown_error') {
+                if (err.message && err.message !== '[object Object]') {
+                    errorDetails = err.message;
+                } else {
+                    errorDetails = JSON.stringify(err, Object.getOwnPropertyNames(err));
+                }
             }
         } catch (e) {
             errorDetails = 'failed_to_stringify_error';
+        }
+
+        // Append Status Code if available (common in spotify-web-api-node)
+        if (err.statusCode) {
+            errorDetails = `[${err.statusCode}] ${errorDetails}`;
         }
 
         const params = new URLSearchParams();
