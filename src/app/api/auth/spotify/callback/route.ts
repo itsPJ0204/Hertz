@@ -84,11 +84,29 @@ export async function GET(request: Request) {
         return NextResponse.redirect(new URL('/profile?spotify=connected', request.url));
 
     } catch (err: any) {
-        console.error('Something went wrong!', err);
-        const errorMessage = err.message ? encodeURIComponent(err.message) : 'unknown_error';
-        // Also check specifics like "Invalid redirect URI" which often comes in body
-        const detailedError = err.body?.error_description || err.body?.error || errorMessage;
+        console.error('Error in Spotify Callback:', err);
 
-        return NextResponse.redirect(new URL(`/profile?error=spotify_callback_failed&details=${encodeURIComponent(detailedError)}`, request.url));
+        let errorDetails = 'unknown_error';
+        try {
+            if (err.body?.error_description) {
+                errorDetails = err.body.error_description;
+            } else if (err.body?.error) {
+                // Spotify sometimes returns objects in error field
+                errorDetails = typeof err.body.error === 'object' ? JSON.stringify(err.body.error) : String(err.body.error);
+            } else if (err.message) {
+                errorDetails = err.message;
+            } else {
+                errorDetails = JSON.stringify(err);
+            }
+        } catch (e) {
+            errorDetails = 'failed_to_stringify_error';
+        }
+
+        const params = new URLSearchParams();
+        params.set('error', 'spotify_callback_failed');
+        params.set('details', errorDetails);
+        params.set('attempted_uri', redirectUri);
+
+        return NextResponse.redirect(new URL(`/profile?${params.toString()}`, request.url));
     }
 }
