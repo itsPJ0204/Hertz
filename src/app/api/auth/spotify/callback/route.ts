@@ -135,6 +135,16 @@ export async function GET(request: Request) {
             return NextResponse.redirect(new URL('/login', request.url));
         }
 
+        // Validate Data Presence
+        const hasValidMusicData =
+            processedProfile.top_artists.length > 0 &&
+            Object.keys(processedProfile.genre_vector).length > 0;
+
+        if (!hasValidMusicData) {
+            console.error('Spotify Linked but no music data found (Top or Library). Blocking link.');
+            return NextResponse.redirect(new URL('/profile?spotify=connected&data_error=INSUFFICIENT_SPOTIFY_DATA', request.url));
+        }
+
         const { error: dbError } = await supabase
             .from('user_music_profiles')
             .upsert({
@@ -142,7 +152,7 @@ export async function GET(request: Request) {
                 top_artists: processedProfile.top_artists,
                 top_genres: processedProfile.top_genres,
                 genre_vector: processedProfile.genre_vector,
-                is_spotify_linked: true,
+                is_spotify_linked: true, // Only true if we actually have data
                 last_updated: new Date().toISOString(),
             });
 

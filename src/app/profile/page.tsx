@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { User, LogOut, Upload, ArrowLeft, Camera, Trash2, Edit2, Play, CheckCircle } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getMyUploads, deleteSong, updateSong } from "@/actions/manageSongs";
 import { usePlayer } from "@/components/player/PlayerContext";
@@ -22,6 +22,7 @@ export default function ProfilePage() {
     const [uploading, setUploading] = useState(false);
     const supabase = createClient();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { playQueue } = usePlayer();
 
     const [mySongs, setMySongs] = useState<any[]>([]);
@@ -34,7 +35,22 @@ export default function ProfilePage() {
     useEffect(() => {
         getProfile();
         fetchMySongs();
-    }, []);
+
+        // Check for Spotify Errors
+        const dataError = searchParams.get('data_error');
+        if (dataError) {
+            if (dataError === 'INSUFFICIENT_SPOTIFY_DATA') {
+                alert("⚠️ Spotify Connected, but we couldn't find any listening history (Top Artists or Saved Tracks). Your music profile will be empty until you listen to more music on Spotify.");
+            } else {
+                alert(`⚠️ Spotify Error: ${decodeURIComponent(dataError)}`);
+            }
+            // Optional: Clean URL
+            router.replace('/profile');
+        } else if (searchParams.get('spotify') === 'connected') {
+            // Success Message?
+            // alert("Spotify Connected Successfully! ✅"); // Optional, maybe too annoying if refreshing
+        }
+    }, [searchParams]);
 
     async function fetchMySongs() {
         const songs = await getMyUploads();
