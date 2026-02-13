@@ -37,8 +37,16 @@ export async function GET(request: Request) {
         spotifyApi.setAccessToken(access_token);
         spotifyApi.setRefreshToken(refresh_token);
 
-        // Fetch User Data (Resilient)
-
+        //        // Verify Identity First
+        let debugUserEmail = 'unknown';
+        try {
+            const me = await spotifyApi.getMe();
+            debugUserEmail = me.body.email;
+            console.log(`[Spotify] Authenticated as: ${me.body.email} (${me.body.product})`);
+            console.log(`[Spotify] URI: ${me.body.uri}`);
+        } catch (e: any) {
+            console.error('[Spotify] Failed to fetch /me endpoint:', e.message || e);
+        }
 
         // Fetch User Data with Granular Logging
         let processedProfile = {
