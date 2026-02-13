@@ -45,71 +45,82 @@ export async function GET(request: Request) {
         };
         let dataErrorDetails = '';
 
+        // Fetch User Data with Granular Logging
+        let processedProfile = {
+            top_artists: [] as any[],
+            top_genres: [] as any[],
+            genre_vector: {} as Record<string, number>
+        };
+
+        let topArtistsItems: any[] = [];
+        let topTracksItems: any[] = [];
+
+        // 1. Try Top Artists
         try {
             const topArtists = await spotifyApi.getMyTopArtists({ limit: 50, time_range: 'medium_term' });
+            topArtistsItems = topArtists.body.items;
+            console.log(`[Spotify] Fetched ${topArtistsItems.length} Top Artists`);
+        } catch (e: any) {
+            console.error('[Spotify] Failed to fetch Top Artists:', e.message || e);
+            if (e.statusCode) console.error(`[Spotify] Top Artists Status: ${e.statusCode}`);
+        }
+
+        // 2. Try Top Tracks
+        try {
             const topTracks = await spotifyApi.getMyTopTracks({ limit: 50, time_range: 'medium_term' });
-            processedProfile = processSpotifyData(topArtists.body.items, topTracks.body.items);
-        } catch (dataErr: any) {
-            console.error('Failed to fetch Spotify Top Data (likely Premium restricted). Attempting Fallback...', dataErr);
+            topTracksItems = topTracks.body.items;
+            console.log(`[Spotify] Fetched ${topTracksItems.length} Top Tracks`);
+        } catch (e: any) {
+            console.error('[Spotify] Failed to fetch Top Tracks:', e.message || e);
+            if (e.statusCode) console.error(`[Spotify] Top Tracks Status: ${e.statusCode}`);
+        }
 
-            // FALLBACK STRATEGY: Saved Tracks
-            // If we can't get "Top" data, we use "Saved Tracks" (Library) which is usually free.
+        // 3. Process what we have so far
+        if (topArtistsItems.length > 0 || topTracksItems.length > 0) {
+            processedProfile = processSpotifyData(topArtistsItems, topTracksItems);
+        }
+
+        // 4. Backfill from Top Tracks if Artists are missing
+        if (processedProfile.top_artists.length === 0 && topTracksItems.length > 0) {
+            console.log('[Spotify] top_artists is empty. Attempting backfill from Top Tracks...');
+            const artistIds = new Set<string>();
+            topTracksItems.forEach((t: any) => t.artists.forEach((a: any) => artistIds.add(a.id)));
+            const artistIdArray = Array.from(artistIds).slice(0, 50);
+
+            if (artistIdArray.length > 0) {
+                try {
+                    const artistsResponse = await spotifyApi.getArtists(artistIdArray);
+                    topArtistsItems = artistsResponse.body.artists;
+                    console.log(`[Spotify] Backfilled ${topArtistsItems.length} artists from Top Tracks`);
+                    processedProfile = processSpotifyData(topArtistsItems, topTracksItems);
+                } catch (e) {
+                    console.error('[Spotify] Failed to fetch backfill artists:', e);
+                }
+            }
+        }
+
+        // 5. Hard Fallback: Saved Tracks
+        if (processedProfile.top_artists.length === 0) {
+            console.log('[Spotify] Still no artists. Attempting Saved Tracks (Library)...');
             try {
-                // 1. Fetch Saved Tracks
                 const savedTracks = await spotifyApi.getMySavedTracks({ limit: 50 });
+                const savedItems = savedTracks.body.items.map((i: any) => i.track);
+                console.log(`[Spotify] Fetched ${savedItems.length} Saved Tracks`);
 
-                // 2. Extract Artist IDs from tracks
-                // We need to fetch artists directly because Track objects don't have Genres.
+                // Extract Artists
                 const artistIds = new Set<string>();
-                const trackObjects: any[] = [];
-
-                savedTracks.body.items.forEach(item => {
-                    trackObjects.push(item.track);
-                    item.track.artists.forEach(a => artistIds.add(a.id));
-                });
-
-                // 3. Fetch Full Artist Details (for Genres)
-                // Spotify allows max 50 IDs per call
+                savedItems.forEach((t: any) => t.artists.forEach((a: any) => artistIds.add(a.id)));
                 const artistIdArray = Array.from(artistIds).slice(0, 50);
-                let fullArtists: any[] = [];
 
                 if (artistIdArray.length > 0) {
                     const artistsResponse = await spotifyApi.getArtists(artistIdArray);
-                    fullArtists = artistsResponse.body.artists;
+                    const libArtists = artistsResponse.body.artists;
+                    console.log(`[Spotify] Fetched ${libArtists.length} artists from Library`);
+                    processedProfile = processSpotifyData(libArtists, savedItems);
                 }
-
-                // 4. Process Data using our existing function
-                // We pass empty "topArtists" because we are synthesizing them from the library
-                // effectively treating the library artists as the "top" artists for this profile.
-                processedProfile = processSpotifyData(fullArtists, trackObjects);
-
-                console.log('Fallback successful: Created profile from Saved Tracks');
-
-            } catch (fallbackErr: any) {
-                console.error('Fallback failed:', fallbackErr);
-                // Capture original error logic for debugging
-                try {
-                    if (dataErr.body) {
-                        if (dataErr.body.error_description) dataErrorDetails = dataErr.body.error_description;
-                        else if (dataErr.body.error) {
-                            dataErrorDetails = typeof dataErr.body.error === 'object' ? JSON.stringify(dataErr.body.error) : String(dataErr.body.error);
-                        }
-                    }
-
-                    if (!dataErrorDetails) {
-                        if (dataErr.message && dataErr.message !== '[object Object]') {
-                            dataErrorDetails = dataErr.message;
-                        } else {
-                            dataErrorDetails = JSON.stringify(dataErr, Object.getOwnPropertyNames(dataErr));
-                        }
-                    }
-                } catch (e) {
-                    dataErrorDetails = 'failed_to_stringify_data_error';
-                }
-
-                if (dataErr.statusCode) {
-                    dataErrorDetails = `[${dataErr.statusCode}] ${dataErrorDetails}`;
-                }
+            } catch (e: any) {
+                console.error('[Spotify] Failed to fetch Saved Tracks:', e.message || e);
+                if (e.statusCode) console.error(`[Spotify] Saved Tracks Status: ${e.statusCode}`);
             }
         }
 
@@ -136,19 +147,17 @@ export async function GET(request: Request) {
         }
 
         // Validate Data Presence
-        console.log('processedProfile Stats:', {
-            artistCount: processedProfile.top_artists.length,
-            genreCount: processedProfile.top_genres.length,
-            vectorSize: Object.keys(processedProfile.genre_vector).length
-        });
+        const artistCount = processedProfile.top_artists.length;
+        const genreCount = processedProfile.top_genres.length;
+        const vectorSize = Object.keys(processedProfile.genre_vector).length;
 
-        const hasValidMusicData =
-            processedProfile.top_artists.length > 0 ||
-            Object.keys(processedProfile.genre_vector).length > 0;
+        console.log('processedProfile Stats:', { artistCount, genreCount, vectorSize });
+
+        const hasValidMusicData = artistCount > 0 || vectorSize > 0;
 
         if (!hasValidMusicData) {
             console.error('Spotify Linked but no music data found (Top or Library). Blocking link.');
-            return NextResponse.redirect(new URL('/profile?spotify=connected&data_error=INSUFFICIENT_SPOTIFY_DATA', request.url));
+            return NextResponse.redirect(new URL(`/profile?spotify=connected&data_error=INSUFFICIENT_SPOTIFY_DATA&debug=A${artistCount}_G${genreCount}_V${vectorSize}`, request.url));
         }
 
         const { error: dbError } = await supabase
