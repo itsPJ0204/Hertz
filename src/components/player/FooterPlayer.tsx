@@ -2,12 +2,14 @@
 
 import { usePlayer } from "./PlayerContext";
 import { ReportModal } from "../report/ReportModal";
-import { Play, Pause, SkipForward, SkipBack, Volume2, ChevronUp, ChevronDown, ListMusic, Repeat, Flag } from "lucide-react";
+import { Play, Pause, SkipForward, SkipBack, Volume2, ChevronUp, ChevronDown, ListMusic, Repeat, Flag, Waves } from "lucide-react";
+import VideoModeVisualizer from './VideoModeVisualizer';
 import clsx from "clsx";
 import { useState } from "react";
 
 export function FooterPlayer() {
     const { currentTrack, isPlaying, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, autoplay, toggleAutoplay, isMuted, toggleMute } = usePlayer();
+    const [isVideoMode, setIsVideoMode] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [isReportOpen, setIsReportOpen] = useState(false);
 
@@ -108,7 +110,7 @@ export function FooterPlayer() {
                             </button>
                         </div>
 
-                        {/* Toggles (Mute & Autoplay) */}
+                        {/* Toggles (Mute & Autoplay & Video Mode) */}
                         <div className="flex justify-center gap-4">
                             <button
                                 onClick={toggleMute}
@@ -128,6 +130,15 @@ export function FooterPlayer() {
                                 )}
                             >
                                 <Repeat size={14} /> Autoplay: {autoplay ? "ON" : "OFF"}
+                            </button>
+                            <button
+                                onClick={() => setIsVideoMode(true)}
+                                className={clsx(
+                                    "flex items-center gap-2 px-4 py-2 border-2 border-black font-bold uppercase text-xs transition-all",
+                                    isVideoMode ? "bg-purple-400 text-white shadow-[2px_2px_0px_0px_black]" : "hover:bg-black/5"
+                                )}
+                            >
+                                <Waves size={14} /> Trance Mode
                             </button>
                         </div>
 
@@ -207,6 +218,9 @@ export function FooterPlayer() {
                     </button>
                 </div>
             </div>
+            {isVideoMode && (
+                <VideoModeVisualizer onClose={() => setIsVideoMode(false)} />
+            )}
         </>
     );
 }

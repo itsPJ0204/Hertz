@@ -23,6 +23,7 @@ interface PlayerContextType {
     toggleAutoplay: () => void;
     isMuted: boolean;
     toggleMute: () => void;
+    audioElement: HTMLAudioElement | null;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -52,13 +53,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+
     const listeningTimeRef = useRef(0); // Total time listened to current track
     const hasReportedRef = useRef(false); // Only report once per "session" of 30s
 
     useEffect(() => {
         if (!audioRef.current) {
             audioRef.current = new Audio();
+            setAudioElement(audioRef.current);
             // Restore mute state if persisted or just sync
             audioRef.current.muted = isMuted;
         }
@@ -356,7 +360,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }, [currentTrack]);
 
     return (
-        <PlayerContext.Provider value={{ currentTrack, isPlaying, play, pause, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, autoplay, toggleAutoplay, isMuted, toggleMute }}>
+        <PlayerContext.Provider value={{ currentTrack, isPlaying, play, pause, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, autoplay, toggleAutoplay, isMuted, toggleMute, audioElement }}>
             {children}
         </PlayerContext.Provider>
     );
