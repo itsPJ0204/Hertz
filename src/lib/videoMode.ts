@@ -1,8 +1,6 @@
 import * as THREE from 'three';
+import { initAudioAnalyzer, getAnalyser } from './audioAnalyzer';
 
-let audioContext: AudioContext | null = null;
-let analyser: AnalyserNode | null = null;
-let source: MediaElementAudioSourceNode | null = null;
 let renderer: THREE.WebGLRenderer | null = null;
 let scene: THREE.Scene | null = null;
 let camera: THREE.PerspectiveCamera | null = null;
@@ -80,29 +78,12 @@ void main() {
 
 export const initVideoMode = (audioElement: HTMLAudioElement, canvas: HTMLCanvasElement, genres: string[] = []) => {
     // 1. Audio Context Setup
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-
-    // Resume if suspended (browser policy)
-    if (audioContext.state === 'suspended') {
-        audioContext.resume();
-    }
+    initAudioAnalyzer(audioElement);
+    const analyser = getAnalyser();
 
     if (!analyser) {
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 512; // Balance between res and perf
-        analyser.smoothingTimeConstant = 0.7; // Lower smoothing for snappier beat detection
-    }
-
-    if (!source) {
-        try {
-            source = audioContext.createMediaElementSource(audioElement);
-            source.connect(analyser);
-            analyser.connect(audioContext.destination);
-        } catch (e) {
-            console.warn("[VideoMode] Source already connected or error:", e);
-        }
+        console.warn("[VideoMode] Audio Analyzer not initialized.");
+        return;
     }
 
     // 2. Three.js Setup
