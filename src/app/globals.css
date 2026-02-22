@@ -78,3 +78,87 @@ body {
 .ambient-fullscreen .bg-clay-primary {
   background-color: hsla(var(--ambient-hue, 200), 80%, 30%, 0.8) !important;
 }
+
+/* =========================================
+   TRANCE MODE (Psychedelic Floating UI)
+========================================= */
+
+.trance-fullscreen {
+  /* Extreme neon lights, very high saturation, rapidly shifting hue */
+  box-shadow:
+    inset 0 0 calc(50px * var(--trance-intensity, 1)) hsla(var(--trance-hue, 200), 100%, 50%, 0.9),
+    inset 0 0 calc(150px * var(--trance-spread, 1)) hsla(calc(var(--trance-hue, 200) + 120), 100%, 50%, 0.7),
+    inset 0 0 calc(300px * var(--trance-spread, 1)) hsla(calc(var(--trance-hue, 200) + 240), 100%, 50%, 0.4) !important;
+
+  background:
+    radial-gradient(circle at 30% 30%, hsla(var(--trance-hue, 200), 100%, 50%, calc(0.3 * var(--trance-intensity, 1))) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, hsla(calc(var(--trance-hue, 200) + 90), 100%, 50%, calc(0.3 * var(--trance-intensity, 1))) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, hsla(calc(var(--trance-hue, 200) + 180), 100%, 50%, calc(0.2 * var(--trance-intensity, 1))) 0%, transparent 80%),
+    #000 !important;
+
+  color: #fff !important;
+  transition: background 0.05s ease-out, box-shadow 0.05s ease-out;
+}
+
+.trance-glow {
+  box-shadow:
+    0 0 calc(20px * var(--trance-intensity, 1)) hsla(var(--trance-hue, 200), 100%, 50%, 0.9),
+    0 0 calc(60px * var(--trance-intensity, 1)) hsla(calc(var(--trance-hue, 200) + 60), 100%, 50%, 0.7),
+    0 0 calc(120px * var(--trance-spread, 1)) hsla(calc(var(--trance-hue, 200) + 120), 100%, 50%, 0.5) !important;
+  border-color: hsla(var(--trance-hue, 200), 100%, 50%, 1) !important;
+  background-color: hsla(var(--trance-hue, 200), 50%, 10%, 0.8) !important;
+  transition: box-shadow 0.05s ease-out, border-color 0.05s ease-out, background-color 0.05s ease-out;
+}
+
+/* Floating animation classes mapping to JS variables */
+.trance-float-0 {
+  transform: translate(var(--trance-x-0, 0px), var(--trance-y-0, 0px)) rotate(var(--trance-r-0, 0deg));
+  transition: transform 0.1s linear;
+}
+
+.trance-float-1 {
+  transform: translate(var(--trance-x-1, 0px), var(--trance-y-1, 0px)) rotate(var(--trance-r-1, 0deg)) scale(calc(0.95 + (var(--trance-intensity, 0.5) * 0.1)));
+  transition: transform 0.1s linear;
+}
+
+.trance-float-2 {
+  transform: translate(var(--trance-x-2, 0px), var(--trance-y-2, 0px)) rotate(var(--trance-r-2, 0deg));
+  transition: transform 0.1s linear;
+}
+
+.trance-float-3 {
+  transform: translate(var(--trance-x-3, 0px), var(--trance-y-3, 0px)) rotate(var(--trance-r-3, 0deg));
+  transition: transform 0.1s linear;
+}
+
+.trance-float-4 {
+  transform: translate(var(--trance-x-4, 0px), var(--trance-y-4, 0px)) rotate(var(--trance-r-4, 0deg));
+  transition: transform 0.1s linear;
+}
+
+/* Recoloring for trance mode text and shadows */
+.trance-fullscreen h2,
+.trance-fullscreen h3,
+.trance-fullscreen p.font-bold,
+.trance-fullscreen span {
+  text-shadow: 0 0 calc(15px * var(--trance-intensity, 1)) hsla(var(--trance-hue, 200), 100%, 60%, 1);
+  color: white !important;
+}
+
+.trance-fullscreen .bg-white {
+  background-color: hsla(var(--trance-hue, 200), 30%, 5%, 0.9) !important;
+  color: white !important;
+}
+
+.trance-fullscreen .border-black {
+  border-color: hsla(var(--trance-hue, 200), 100%, 50%, 0.6) !important;
+}
+
+.trance-fullscreen .text-black,
+.trance-fullscreen .text-gray-800 {
+  color: white !important;
+}
+
+.trance-fullscreen .bg-clay-primary {
+  background-color: hsla(var(--trance-hue, 200), 100%, 40%, 0.9) !important;
+}

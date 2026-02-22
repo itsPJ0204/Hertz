@@ -3,14 +3,14 @@
 import { usePlayer } from "./PlayerContext";
 import { ReportModal } from "../report/ReportModal";
 import { Play, Pause, SkipForward, SkipBack, Volume2, ChevronUp, ChevronDown, ListMusic, Repeat, Flag, Waves, Sparkles } from "lucide-react";
-import VideoModeVisualizer from './VideoModeVisualizer';
 import { AmbientModeEffect } from './AmbientModeEffect';
+import { TranceModeEffect } from './TranceModeEffect';
 import clsx from "clsx";
 import { useState } from "react";
 
 export function FooterPlayer() {
     const { currentTrack, isPlaying, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, autoplay, toggleAutoplay, isMuted, toggleMute } = usePlayer();
-    const [isVideoMode, setIsVideoMode] = useState(false);
+    const [isTranceMode, setIsTranceMode] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [isAmbientMode, setIsAmbientMode] = useState(false);
@@ -39,15 +39,16 @@ export function FooterPlayer() {
                 className={clsx(
                     "fixed inset-0 z-50 flex flex-col overflow-y-auto transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
                     isExpanded ? "translate-y-0" : "translate-y-full",
-                    isAmbientMode ? "ambient-fullscreen bg-black flex" : "bg-clay-bg flex"
+                    isTranceMode ? "trance-fullscreen bg-black flex overflow-hidden" : isAmbientMode ? "ambient-fullscreen bg-black flex" : "bg-clay-bg flex"
                 )}
             >
-                {isAmbientMode && <AmbientModeEffect />}
+                {isAmbientMode && !isTranceMode && <AmbientModeEffect />}
+                {isTranceMode && <TranceModeEffect />}
 
                 {/* Foreground layer to prevent collapsing or overlap by ambient effects */}
                 <div className="relative z-10 flex flex-col min-h-full">
                     {/* Header */}
-                    <div className="p-6 flex items-center justify-between">
+                    <div className={clsx("p-6 flex items-center justify-between", isTranceMode && "trance-float-0")}>
                         <button
                             onClick={() => setIsExpanded(false)}
                             className="p-2 border-2 border-transparent hover:border-black rounded-full transition-all"
@@ -67,12 +68,12 @@ export function FooterPlayer() {
                         </button>
                     </div>
 
-                    <div className={clsx("flex-1 max-w-4xl mx-auto w-full p-6 flex flex-col md:flex-row gap-12", isAmbientMode && "items-center")}>
+                    <div className={clsx("flex-1 max-w-4xl mx-auto w-full p-6 flex flex-col md:flex-row gap-12", (isAmbientMode || isTranceMode) && "items-center")}>
                         {/* Left: Cover & Info */}
-                        <div className={clsx("flex flex-col justify-center items-center text-center", isAmbientMode ? "w-full md:w-1/2" : "flex-1")}>
+                        <div className={clsx("flex flex-col justify-center items-center text-center", (isAmbientMode || isTranceMode) ? "w-full md:w-1/2" : "flex-1", isTranceMode && "trance-float-1")}>
                             <div className={clsx(
                                 "w-64 h-64 md:w-96 md:h-96 border-4 relative overflow-hidden transition-all duration-300",
-                                isAmbientMode ? "ambient-glow" : "bg-white border-black shadow-[8px_8px_0px_0px_#000000]"
+                                isTranceMode ? "trance-glow rounded-3xl" : isAmbientMode ? "ambient-glow" : "bg-white border-black shadow-[8px_8px_0px_0px_#000000]"
                             )}>
                                 {currentTrack.image ? (
                                     <img src={currentTrack.image} className="w-full h-full object-cover" />
@@ -80,14 +81,14 @@ export function FooterPlayer() {
                                     <div className="w-full h-full bg-clay-primary opacity-20" />
                                 )}
                             </div>
-                            <h2 className="text-3xl md:text-4xl font-black uppercase italic leading-none mb-2">{currentTrack.name}</h2>
+                            <h2 className="text-3xl md:text-4xl font-black uppercase italic leading-none mb-2 mt-4">{currentTrack.name}</h2>
                             <p className="text-xl font-bold opacity-60">{currentTrack.artist_name}</p>
                         </div>
 
                         {/* Right: Controls & Queue */}
-                        <div className={clsx("flex flex-col justify-center gap-8", isAmbientMode ? "w-full md:w-1/2" : "flex-1")}>
+                        <div className={clsx("flex flex-col justify-center gap-8", (isAmbientMode || isTranceMode) ? "w-full md:w-1/2" : "flex-1")}>
                             {/* Progress */}
-                            <div className="w-full">
+                            <div className={clsx("w-full", isTranceMode && "trance-float-2")}>
                                 <div
                                     className="w-full h-4 bg-white border-2 border-black rounded-full overflow-hidden cursor-pointer relative group"
                                     onClick={(e) => {
@@ -105,7 +106,7 @@ export function FooterPlayer() {
                             </div>
 
                             {/* Main Controls */}
-                            <div className="flex items-center justify-center gap-8">
+                            <div className={clsx("flex items-center justify-center gap-8", isTranceMode && "trance-float-3")}>
                                 <button onClick={prev} className="p-4 hover:scale-110 transition-transform">
                                     <SkipBack size={32} fill="currentColor" />
                                 </button>
@@ -113,7 +114,7 @@ export function FooterPlayer() {
                                     onClick={toggle}
                                     className={clsx(
                                         "w-20 h-20 text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl",
-                                        isAmbientMode ? "ambient-glow border-2" : "bg-black"
+                                        isTranceMode ? "trance-glow border-2" : isAmbientMode ? "ambient-glow border-2" : "bg-black"
                                     )}
                                 >
                                     {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" />}
@@ -124,7 +125,7 @@ export function FooterPlayer() {
                             </div>
 
                             {/* Toggles (Mute & Autoplay & Video Mode) */}
-                            <div className="flex justify-center gap-4">
+                            <div className={clsx("flex justify-center gap-4 flex-wrap", isTranceMode && "trance-float-4")}>
                                 <button
                                     onClick={toggleMute}
                                     className={clsx(
@@ -145,27 +146,33 @@ export function FooterPlayer() {
                                     <Repeat size={14} /> Autoplay: {autoplay ? "ON" : "OFF"}
                                 </button>
                                 <button
-                                    onClick={() => setIsAmbientMode(!isAmbientMode)}
+                                    onClick={() => {
+                                        setIsAmbientMode(!isAmbientMode);
+                                        if (isTranceMode) setIsTranceMode(false);
+                                    }}
                                     className={clsx(
                                         "flex items-center gap-2 px-4 py-2 border-2 font-bold uppercase text-xs transition-all",
-                                        isAmbientMode ? "ambient-glow text-white" : "border-black hover:bg-black/5"
+                                        isAmbientMode && !isTranceMode ? "ambient-glow text-white" : "border-black hover:bg-black/5"
                                     )}
                                 >
                                     <Sparkles size={14} /> Ambient
                                 </button>
                                 <button
-                                    onClick={() => setIsVideoMode(true)}
+                                    onClick={() => {
+                                        setIsTranceMode(!isTranceMode);
+                                        if (isAmbientMode) setIsAmbientMode(false);
+                                    }}
                                     className={clsx(
-                                        "flex items-center gap-2 px-4 py-2 border-2 border-black font-bold uppercase text-xs transition-all",
-                                        isVideoMode ? "bg-purple-400 text-white shadow-[2px_2px_0px_0px_black]" : "hover:bg-black/5"
+                                        "flex items-center gap-2 px-4 py-2 border-2 font-bold uppercase text-xs transition-all border-black hover:bg-black/5",
+                                        isTranceMode ? "trance-glow text-white border-transparent" : "border-black"
                                     )}
                                 >
-                                    <Waves size={14} /> Trance Mode
+                                    <Waves size={14} /> Trance
                                 </button>
                             </div>
 
                             {/* Queue Preview */}
-                            {!isAmbientMode && (
+                            {(!isAmbientMode && !isTranceMode) && (
                                 <div className="mt-8 border-t-4 border-black pt-8">
                                     <h3 className="font-black uppercase mb-4 flex items-center gap-2">
                                         <ListMusic /> Next Up {queue.length > 0 && <span className="text-xs opacity-50">({queue.length - (currentIndex + 1)})</span>}
@@ -243,9 +250,6 @@ export function FooterPlayer() {
                     </button>
                 </div>
             </div>
-            {isVideoMode && (
-                <VideoModeVisualizer onClose={() => setIsVideoMode(false)} />
-            )}
         </>
     );
 }
