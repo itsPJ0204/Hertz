@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Heart, UploadCloud, User, MessageCircle, LogOut, Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, Heart, UploadCloud, User, MessageCircle, LogOut, Users, ChevronLeft, ChevronRight, Music, PlusCircle, ListMusic } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -29,6 +29,7 @@ export function Sidebar({ collapsed = false, toggle, onCloseMobile }: SidebarPro
     useEffect(() => {
         // Initial Fetch
         getUnreadCounts().then(setCounts);
+
         fetch('/api/auth/spotify/status')
             .then(res => {
                 if (!res.ok) throw new Error('Status check failed');
@@ -41,7 +42,6 @@ export function Sidebar({ collapsed = false, toggle, onCloseMobile }: SidebarPro
             .then(data => setSpotifyLinked(data.linked))
             .catch(err => {
                 // Silently fail - likely unauthenticated or redirecting
-                // console.error("Failed to fetch spotify status", err)
             });
 
         // Poll every 3 seconds for updates
@@ -59,6 +59,7 @@ export function Sidebar({ collapsed = false, toggle, onCloseMobile }: SidebarPro
 
     const navItems = [
         { name: "Home", href: "/", icon: Home },
+        { name: "Your Playlists", href: "/my-playlists", icon: ListMusic },
         {
             name: "Matches",
             href: "/feed",
@@ -195,7 +196,7 @@ export function Sidebar({ collapsed = false, toggle, onCloseMobile }: SidebarPro
             )}
 
             {/* Footer */}
-            <div className="mt-8 pt-6 border-t border-gray-800 w-full">
+            <div className="mt-auto pt-6 border-t border-gray-800 w-full">
                 <button
                     onClick={handleLogout}
                     title="Log Out"
@@ -207,8 +208,6 @@ export function Sidebar({ collapsed = false, toggle, onCloseMobile }: SidebarPro
                     )}
                 </button>
             </div>
-
-
         </div>
     );
 }

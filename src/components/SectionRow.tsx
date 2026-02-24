@@ -5,6 +5,7 @@ import { Play, Heart, Share2 } from "lucide-react";
 import { usePlayer } from "./player/PlayerContext";
 import { toggleLike } from "@/actions/toggleLike";
 import { useTransition, useState } from "react";
+import { SongActionMenu } from "./SongActionMenu";
 
 interface Track {
     id: string;
@@ -88,7 +89,10 @@ function TrackCard({ track }: { track: Track }) {
                         {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
                     </span>
                     {/* Mini Actions */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                        <div onClick={e => e.stopPropagation()} className="opacity-50 hover:opacity-100 transition-opacity">
+                            <SongActionMenu track={track as any} />
+                        </div>
                         <button
                             onClick={(e) => { e.stopPropagation(); handleLike(); }}
                             className={`transition-colors hover:scale-110 active:scale-95 ${isLiked ? "text-red-500 fill-red-500" : "text-black hover:text-red-500"}`}

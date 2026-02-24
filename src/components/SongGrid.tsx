@@ -3,6 +3,7 @@
 import { JamendoTrack } from "@/lib/jamendo";
 import { usePlayer } from "./player/PlayerContext";
 import { Play } from "lucide-react";
+import { SongActionMenu } from "./SongActionMenu";
 
 export function SongGrid({ tracks }: { tracks: JamendoTrack[] }) {
     const { play } = usePlayer();
@@ -29,12 +30,15 @@ export function SongGrid({ tracks }: { tracks: JamendoTrack[] }) {
                     </div>
 
                     <div className="flex justify-between items-start">
-                        <div>
-                            <h3 className="font-bold text-lg leading-tight">{track.name}</h3>
-                            <p className="text-sm opacity-70 mt-1">{track.artist_name}</p>
+                        <div className="flex-1 pr-2">
+                            <h3 className="font-bold text-lg leading-tight truncate">{track.name}</h3>
+                            <p className="text-sm opacity-70 mt-1 truncate">{track.artist_name}</p>
                         </div>
-                        <div className="text-xs font-mono border border-black px-1.5 py-0.5 rounded-sm">
-                            {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
+                        <div className="flex flex-col items-end gap-2 shrink-0">
+                            <SongActionMenu track={track} />
+                            <div className="text-xs font-mono border border-black px-1.5 py-0.5 rounded-sm">
+                                {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
+                            </div>
                         </div>
                     </div>
 

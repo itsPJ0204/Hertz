@@ -6,21 +6,15 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
 
-    if (!query || query.length < 1) {
-        return NextResponse.json({ results: [] });
-    }
-
     const supabase = await createClient();
 
-    // Search logic:
-    // We want to find songs where title OR artist OR genre matches the query.
-    // Supabase .or() syntax is flexible.
+    let queryBuilder = supabase.from("songs").select("*");
 
-    const { data: songs, error } = await supabase
-        .from("songs")
-        .select("*")
-        .or(`title.ilike.%${query}%,artist.ilike.%${query}%,genre.ilike.%${query}%`)
-        .limit(10); // Limit results for performance
+    if (query && query.length > 0) {
+        queryBuilder = queryBuilder.or(`title.ilike.%${query}%,artist.ilike.%${query}%,genre.ilike.%${query}%`);
+    }
+
+    const { data: songs, error } = await queryBuilder.limit(50); // Increased limit slightly to show more options
 
     if (error) {
         console.error("Search API Error:", error);

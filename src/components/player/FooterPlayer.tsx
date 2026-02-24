@@ -2,18 +2,47 @@
 
 import { usePlayer } from "./PlayerContext";
 import { ReportModal } from "../report/ReportModal";
-import { Play, Pause, SkipForward, SkipBack, Volume2, ChevronUp, ChevronDown, ListMusic, Repeat, Flag, Waves, Sparkles } from "lucide-react";
+import { Play, Pause, SkipForward, SkipBack, Volume2, ChevronUp, ChevronDown, ListMusic, Repeat, Flag, Waves, Sparkles, GripVertical, Trash2 } from "lucide-react";
 import { AmbientModeEffect } from './AmbientModeEffect';
 import { TranceModeEffect } from './TranceModeEffect';
 import clsx from "clsx";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 export function FooterPlayer() {
-    const { currentTrack, isPlaying, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, autoplay, toggleAutoplay, isMuted, toggleMute } = usePlayer();
+    const { currentTrack, isPlaying, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, autoplay, toggleAutoplay, isMuted, toggleMute, removeFromQueue, reorderQueue } = usePlayer();
     const [isTranceMode, setIsTranceMode] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [isAmbientMode, setIsAmbientMode] = useState(false);
+
+    // Drag and Drop state
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+    const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+        setDraggedIndex(index);
+        e.dataTransfer.effectAllowed = "move";
+        // e.dataTransfer.setData("text/html", e.currentTarget.outerHTML);
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+        e.preventDefault();
+        setDragOverIndex(index);
+        e.dataTransfer.dropEffect = "move";
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+        e.preventDefault();
+        if (draggedIndex === null || draggedIndex === index) return;
+
+        // Calculate absolute indices in the queue
+        const absoluteStartIndex = currentIndex + 1 + draggedIndex;
+        const absoluteEndIndex = currentIndex + 1 + index;
+
+        reorderQueue(absoluteStartIndex, absoluteEndIndex);
+        setDraggedIndex(null);
+        setDragOverIndex(null);
+    };
 
     const formatTime = (time: number) => {
         if (!time) return "0:00";
@@ -173,20 +202,52 @@ export function FooterPlayer() {
 
                             {/* Queue Preview */}
                             {(!isAmbientMode && !isTranceMode) && (
-                                <div className="mt-8 border-t-4 border-black pt-8">
+                                <div className="mt-8 border-t-4 border-black pt-8 flex flex-col min-h-0">
                                     <h3 className="font-black uppercase mb-4 flex items-center gap-2">
-                                        <ListMusic /> Next Up {queue.length > 0 && <span className="text-xs opacity-50">({queue.length - (currentIndex + 1)})</span>}
+                                        <ListMusic /> Next Up {queue.length > 0 && <span className="text-xs opacity-50">({Math.max(0, queue.length - (currentIndex + 1))})</span>}
                                     </h3>
-                                    <div className="h-64 overflow-y-auto space-y-2 border-2 border-black p-2 bg-white">
-                                        {queue.slice(currentIndex + 1).map((track, i) => (
-                                            <div key={i} className="flex items-center gap-3 p-2 hover:bg-gray-100 cursor-pointer" onClick={() => playQueue(queue, currentIndex + 1 + i)}>
-                                                <img src={track.image || "https://placehold.co/40"} className="w-10 h-10 border border-black object-cover" />
-                                                <div className="flex-1 overflow-hidden">
-                                                    <p className="font-bold text-sm truncate">{track.name}</p>
-                                                    <p className="text-xs opacity-60 truncate">{track.artist_name}</p>
+                                    <div className="flex-1 overflow-y-auto space-y-2 border-2 border-black p-2 bg-white max-h-64">
+                                        {queue.slice(currentIndex + 1).map((track, i) => {
+                                            const actualIndex = currentIndex + 1 + i;
+                                            return (
+                                                <div
+                                                    key={`queue-item-${actualIndex}-${track.id}`}
+                                                    draggable
+                                                    onDragStart={(e) => handleDragStart(e, i)}
+                                                    onDragOver={(e) => handleDragOver(e, i)}
+                                                    onDrop={(e) => handleDrop(e, i)}
+                                                    onDragEnd={() => { setDraggedIndex(null); setDragOverIndex(null); }}
+                                                    className={clsx(
+                                                        "flex items-center gap-3 p-2 hover:bg-gray-100 transition-colors group border-2 border-transparent",
+                                                        dragOverIndex === i && draggedIndex !== i && "border-black border-dashed bg-gray-50",
+                                                        draggedIndex === i && "opacity-50"
+                                                    )}
+                                                >
+                                                    <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-black">
+                                                        <GripVertical size={20} />
+                                                    </div>
+                                                    <img
+                                                        src={track.image || "https://placehold.co/40"}
+                                                        className="w-10 h-10 border border-black object-cover cursor-pointer hover:scale-105 transition-transform"
+                                                        onClick={() => playQueue(queue, actualIndex)}
+                                                    />
+                                                    <div
+                                                        className="flex-1 overflow-hidden cursor-pointer"
+                                                        onClick={() => playQueue(queue, actualIndex)}
+                                                    >
+                                                        <p className="font-bold text-sm truncate">{track.name}</p>
+                                                        <p className="text-xs opacity-60 truncate">{track.artist_name}</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => removeFromQueue(actualIndex)}
+                                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                                        title="Remove from queue"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                         {queue.length > 0 && queue.slice(currentIndex + 1).length === 0 && <p className="opacity-50 text-center py-4">End of queue.</p>}
                                         {queue.length === 0 && <p className="opacity-50 text-center py-4">Autoplay will find new vibes...</p>}
                                     </div>

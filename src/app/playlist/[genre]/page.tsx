@@ -3,6 +3,7 @@ import { ArrowLeft, Play, Music } from "lucide-react";
 import Link from "next/link";
 import { PlaylistClient } from "./playlist-client"; // Client component for player interaction
 import { PlaylistCover } from "./PlaylistCover";
+import { PlaylistSongs } from "./PlaylistSongs";
 
 export default async function PlaylistPage({ params, searchParams }: { params: Promise<{ genre: string }>, searchParams: Promise<{ type?: string }> }) {
     const supabase = await createClient();
@@ -65,24 +66,7 @@ export default async function PlaylistPage({ params, searchParams }: { params: P
                 </div>
 
                 {/* Song List */}
-                <div className="space-y-2 md:space-y-4">
-                    {songs?.map((song: any, i) => (
-                        <div key={song.id} className="bg-white border-2 border-black p-2 md:p-4 flex items-center gap-2 md:gap-4 hover:bg-gray-50 transition-colors">
-                            <div className="hidden md:block w-8 font-black opacity-30 text-right">{i + 1}</div>
-                            <img src={song.cover_url || "https://placehold.co/40"} className="w-10 h-10 md:w-12 md:h-12 border border-black object-cover shrink-0" />
-                            <div className="flex-1 min-w-0">
-                                <h3 className="font-bold uppercase truncate text-sm md:text-base">{song.title}</h3>
-                                <p className="text-xs font-bold opacity-50 uppercase truncate">{song.artist}</p>
-                            </div>
-                            <div className="text-xs font-mono font-bold opacity-50 shrink-0">
-                                {Math.floor(song.duration / 60)}:{(song.duration % 60).toString().padStart(2, '0')}
-                            </div>
-                        </div>
-                    ))}
-                    {songs?.length === 0 && (
-                        <div className="text-center py-12 opacity-50 font-bold uppercase">No songs found in this playlist.</div>
-                    )}
-                </div>
+                <PlaylistSongs songs={songs} />
             </div>
         </div>
     );

@@ -19,6 +19,10 @@ interface PlayerContextType {
     queue: JamendoTrack[];
     currentIndex: number;
     playQueue: (tracks: JamendoTrack[], startIndex?: number) => void;
+    playNext: (track: JamendoTrack) => void;
+    addToQueue: (track: JamendoTrack) => void;
+    removeFromQueue: (index: number) => void;
+    reorderQueue: (startIndex: number, endIndex: number) => void;
     autoplay: boolean;
     toggleAutoplay: () => void;
     isMuted: boolean;
@@ -176,32 +180,25 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         let newQueue = [...queue];
         let newIndex = currentIndex;
 
-        const existingSchema = queue.find(t => t.id === track.id);
-
         if (currentTrack?.id === track.id) {
             audioRef.current?.play();
             setIsPlaying(true);
             return;
         }
 
-        if (existingSchema) {
-            // Track exists in queue, jump to it
-            newIndex = queue.findIndex(t => t.id === track.id);
+        const existingIndex = queue.findIndex(t => t.id === track.id);
+
+        if (existingIndex !== -1) {
+            // Track exists in current queue, just jump to it
+            newIndex = existingIndex;
         } else {
-            // New track, replace queue or append? 
-            // Usually "Play" on a track listing replaces queue. "Add to queue" appends.
-            // We'll assume replace for direct play, but maybe we should keep it simpler.
-            // Let's start fresh queue with this track.
+            // Standalone play: Start a fresh queue with this track
             newQueue = [track];
             newIndex = 0;
 
-            // IMMEDIATE POPULATION: Fetch next songs
-            const recs = await fetchRecommendations(newQueue);
-            if (recs.length > 0) {
-                newQueue.push(...recs);
-            }
-            setQueue(newQueue);
-            setCurrentIndex(0);
+            // Note: We don't immediately fetch 5 recommendations here to avoid 
+            // overwriting right away. We will let `next()` handle fetching 
+            // when the user gets near the end of the queue.
         }
 
         setCurrentTrack(track); // Opt update
@@ -252,31 +249,100 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         play(tracks[startIndex]);
     };
 
+    const playNext = (track: JamendoTrack) => {
+        setQueue(prevQueue => {
+            const newQueue = [...prevQueue];
+            // Insert right after current index
+            newQueue.splice(currentIndex + 1, 0, track);
+            return newQueue;
+        });
+        // If we want immediate feedback, maybe a toast would help, but state updates are enough.
+    };
+
+    const addToQueue = (track: JamendoTrack) => {
+        setQueue(prevQueue => [...prevQueue, track]);
+    };
+
+    const removeFromQueue = (index: number) => {
+        setQueue(prevQueue => {
+            const newQueue = [...prevQueue];
+            newQueue.splice(index, 1);
+            return newQueue;
+        });
+        if (currentIndex > index) {
+            setCurrentIndex(prev => prev - 1);
+        } else if (currentIndex === index && currentTrack) {
+            // Need to skip to next track
+            next();
+        }
+    };
+
+    const reorderQueue = (startIndex: number, endIndex: number) => {
+        setQueue(prevQueue => {
+            const result = Array.from(prevQueue);
+            const [removed] = result.splice(startIndex, 1);
+            result.splice(endIndex, 0, removed);
+            return result;
+        });
+
+        // Adjust currentIndex if the currently playing track was moved or shifted
+        setCurrentIndex(prevIndex => {
+            if (startIndex === prevIndex) {
+                return endIndex;
+            } else if (startIndex < prevIndex && endIndex >= prevIndex) {
+                return prevIndex - 1;
+            } else if (startIndex > prevIndex && endIndex <= prevIndex) {
+                return prevIndex + 1;
+            }
+            return prevIndex;
+        });
+    };
+
     const next = async () => {
+        // Find if we're near the end of the queue and need more songs
+        const isNearEnd = queue.length > 0 && currentIndex >= queue.length - 2;
+
+        // Fetch recommendations ahead of time if we're near the end
+        if (isNearEnd && autoplayRef.current) {
+            fetchRecommendations(queue).then(recs => {
+                if (recs.length > 0) {
+                    setQueue(prev => {
+                        // Avoid adding duplicates by checking IDs
+                        const existingIds = new Set(prev.map(t => t.id));
+                        const newRecs = recs.filter(r => !existingIds.has(r.id));
+                        return [...prev, ...newRecs];
+                    });
+                }
+            }).catch(e => console.error("Failed to fetch next autoplay songs:", e));
+        }
+
         if (queue.length > 0 && currentIndex < queue.length - 1) {
             const nextIndex = currentIndex + 1;
             setCurrentIndex(nextIndex);
             play(queue[nextIndex]);
-
-            // Pre-fetch if getting close to end
-            if (queue.length - (nextIndex + 1) < 5) {
-                const recs = await fetchRecommendations(queue);
-                if (recs.length > 0) {
-                    setQueue(prev => [...prev, ...recs]);
-                }
-            }
-        } else {
-            // Should not happen often if we pre-fetch, but as fallback
+        } else if (autoplayRef.current) {
+            // If we are exactly at the end and still need a song RIGHT NOW
+            setIsPlaying(false); // Pause briefly while fetching
             const recs = await fetchRecommendations(queue);
             if (recs.length > 0) {
-                setQueue(prev => [...prev, ...recs]);
+                setQueue(prev => {
+                    const existingIds = new Set(prev.map(t => t.id));
+                    const newRecs = recs.filter(r => !existingIds.has(r.id));
+                    return [...prev, ...newRecs];
+                });
+
                 // Play first new one
-                const nextIndex = queue.length;
-                setCurrentIndex(nextIndex);
-                play(recs[0]);
+                // We use setTimeout to ensure state had a chance to process a bit, or just rely on the data we have
+                const nextTrack = recs[0];
+                if (nextTrack) {
+                    setCurrentIndex(queue.length); // It will be placed at the end of the old queue length
+                    play(nextTrack);
+                }
             } else {
                 setIsPlaying(false);
             }
+        } else {
+            setIsPlaying(false);
         }
     };
 
@@ -360,7 +426,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }, [currentTrack]);
 
     return (
-        <PlayerContext.Provider value={{ currentTrack, isPlaying, play, pause, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, autoplay, toggleAutoplay, isMuted, toggleMute, audioElement }}>
+        <PlayerContext.Provider value={{ currentTrack, isPlaying, play, pause, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, playNext, addToQueue, removeFromQueue, reorderQueue, autoplay, toggleAutoplay, isMuted, toggleMute, audioElement }}>
             {children}
         </PlayerContext.Provider>
     );
