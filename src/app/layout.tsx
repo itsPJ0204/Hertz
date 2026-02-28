@@ -10,11 +10,16 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Hertz",
   description: "Connect through music",
+  manifest: "/manifest.json",
   icons: {
     icon: "/app_icon.png",
     shortcut: "/app_icon.png",
     apple: "/app_icon.png",
   },
+};
+
+export const viewport = {
+  themeColor: "#E8E4D9",
 };
 
 import { PlayerProvider } from "@/components/player/PlayerContext";
@@ -30,6 +35,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="apple-touch-icon" href="/app_icon.png" />
+      </head>
       <body
         className={`${inter.variable} antialiased bg-[#E8E4D9]`}
       >
@@ -43,6 +51,26 @@ export default function RootLayout({
           <NotificationsList />
         </PlayerProvider>
         <script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID}`} crossOrigin="anonymous"></script>
+
+        {/* Service Worker Registration */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(
+                    function(registration) {
+                      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    },
+                    function(err) {
+                      console.log('ServiceWorker registration failed: ', err);
+                    }
+                  );
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );
