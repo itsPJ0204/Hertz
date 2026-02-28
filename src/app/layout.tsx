@@ -51,26 +51,6 @@ export default function RootLayout({
           <NotificationsList />
         </PlayerProvider>
         <script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID}`} crossOrigin="anonymous"></script>
-
-        {/* Service Worker Registration */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').then(
-                    function(registration) {
-                      console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    },
-                    function(err) {
-                      console.log('ServiceWorker registration failed: ', err);
-                    }
-                  );
-                });
-              }
-            `,
-          }}
-        />
       </body>
     </html>
   );
