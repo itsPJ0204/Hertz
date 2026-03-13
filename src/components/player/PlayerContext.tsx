@@ -249,6 +249,13 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                 audioRef.current.src = `/api/stream/${track.id}`;
             }
 
+            // CRITICAL: Resume the AudioContext on user gesture for mobile browsers.
+            // Mobile browsers suspend AudioContext by default and require a user interaction to unlock it.
+            // Since all audio is routed through the Web Audio API pipeline, a suspended context = silence.
+            if (musicAudioCtxRef.current && musicAudioCtxRef.current.state === 'suspended') {
+                musicAudioCtxRef.current.resume().catch(e => console.warn('[Player] AudioContext resume failed:', e));
+            }
+
             audioRef.current.play()
                 .then(() => setIsPlaying(true))
                 .catch(e => console.error("[Player] Playback FAILED:", e));
@@ -295,6 +302,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const toggle = () => {
         if (isPlaying) pause();
         else if (currentTrack) {
+            if (musicAudioCtxRef.current && musicAudioCtxRef.current.state === 'suspended') {
+                musicAudioCtxRef.current.resume().catch(e => console.warn('[Player] AudioContext resume failed:', e));
+            }
             audioRef.current?.play();
             setIsPlaying(true);
         }
