@@ -177,6 +177,33 @@ export function Sidebar({ collapsed = false, toggle, onCloseMobile }: SidebarPro
                         </button>
                     )}
                 </div>
+
+                {/* Go Premium CTA */}
+                <div className="pt-4 border-t border-gray-800 mt-2">
+                    <Link
+                        href="/premium"
+                        onClick={() => onCloseMobile && onCloseMobile()}
+                        title={collapsed ? "Go Premium" : ""}
+                        className={`group relative flex items-center gap-3 md:gap-4 p-2.5 md:p-3 rounded-lg transition-all overflow-hidden ${
+                            isActive("/premium")
+                                ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black shadow-[4px_4px_0px_0px_#92400e]"
+                                : "bg-gradient-to-r from-amber-500/20 to-yellow-600/20 text-amber-400 hover:from-amber-500/40 hover:to-yellow-600/40 hover:text-amber-300 border border-amber-500/30 hover:border-amber-400/60"
+                        } ${collapsed ? "justify-center" : ""}`}
+                    >
+                        {/* Shimmer effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+
+                        <div className="relative">
+                            <span className="text-lg shrink-0">👑</span>
+                        </div>
+                        {!collapsed && (
+                            <div className="flex flex-col relative z-10">
+                                <span className="uppercase text-sm tracking-wide font-black whitespace-nowrap">Upgrade to HZ+</span>
+                                <span className="text-[10px] opacity-70 font-semibold -mt-0.5">Unlock all features</span>
+                            </div>
+                        )}
+                    </Link>
+                </div>
             </nav>
 
             {/* AdSense Unit */}
