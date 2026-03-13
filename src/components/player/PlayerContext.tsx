@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useRef, useEffect } from 'r
 import { JamendoTrack } from '@/lib/jamendo';
 import { createClient } from '@/lib/supabase/client';
 import { getRecommendations } from '@/lib/recommendations';
+import { AudioDuckingEngine } from './AudioDuckingEngine';
 
 interface PlayerContextType {
     currentTrack: JamendoTrack | null;
@@ -28,6 +29,8 @@ interface PlayerContextType {
     isMuted: boolean;
     toggleMute: () => void;
     audioElement: HTMLAudioElement | null;
+    isNoiseReductionEnabled: boolean;
+    toggleNoiseReduction: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -41,6 +44,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const [currentIndex, setCurrentIndex] = useState(-1);
     const [autoplay, setAutoplay] = useState(true);
     const [isMuted, setIsMuted] = useState(false);
+    const [isNoiseReductionEnabled, setIsNoiseReductionEnabled] = useState(false);
     const autoplayRef = useRef(true); // Ref for access in event listeners
 
     // Track how many upcoming tracks were explicitly added by the user (playNext/addToQueue)
@@ -54,6 +58,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => { autoplayRef.current = autoplay; }, [autoplay]);
 
     const toggleAutoplay = () => setAutoplay(prev => !prev);
+    const toggleNoiseReduction = () => setIsNoiseReductionEnabled(prev => !prev);
 
     // Mute Logic
     const toggleMute = () => {
@@ -459,8 +464,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }, [currentTrack]);
 
     return (
-        <PlayerContext.Provider value={{ currentTrack, isPlaying, play, pause, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, playNext, addToQueue, removeFromQueue, reorderQueue, autoplay, toggleAutoplay, isMuted, toggleMute, audioElement }}>
+        <PlayerContext.Provider value={{ currentTrack, isPlaying, play, pause, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, playNext, addToQueue, removeFromQueue, reorderQueue, autoplay, toggleAutoplay, isMuted, toggleMute, audioElement, isNoiseReductionEnabled, toggleNoiseReduction }}>
             {children}
+            <AudioDuckingEngine />
         </PlayerContext.Provider>
     );
 }

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getRecommendations } from "@/lib/recommendations";
 
 import { SearchComponent } from "@/components/SearchComponent";
+import { NoiseReductionToggle } from "@/components/NoiseReductionToggle";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -122,12 +123,20 @@ export default async function Home() {
 
       <main className="max-w-7xl mx-auto p-8 overflow-hidden">
         <div className="mb-12">
-          <h1 className="text-5xl font-black uppercase italic tracking-tighter mb-2">
-            Discover
-          </h1>
-          <div className="font-bold opacity-60 mb-8">Your vibe, uncensored.</div>
-
-          <SearchComponent />
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-2">
+            <div>
+              <h1 className="text-5xl font-black uppercase italic tracking-tighter mb-2">
+                Discover
+              </h1>
+              <div className="font-bold opacity-60">Your vibe, uncensored.</div>
+            </div>
+            <div className="mb-2">
+              <NoiseReductionToggle />
+            </div>
+          </div>
+          <div className="mt-8">
+            <SearchComponent />
+          </div>
         </div>
 
         {/* Sections */}
