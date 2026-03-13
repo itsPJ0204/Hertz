@@ -31,6 +31,7 @@ interface PlayerContextType {
     audioElement: HTMLAudioElement | null;
     isNoiseReductionEnabled: boolean;
     toggleNoiseReduction: () => void;
+    gainNode: GainNode | null;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -72,6 +73,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
+    // Web Audio API: Route music through GainNode for quality-preserving volume control
+    const musicAudioCtxRef = useRef<AudioContext | null>(null);
+    const gainNodeRef = useRef<GainNode | null>(null);
+    const [gainNode, setGainNode] = useState<GainNode | null>(null);
+    const mediaSourceCreated = useRef(false);
+
     const listeningTimeRef = useRef(0); // Total time listened to current track
     const hasReportedRef = useRef(false); // Only report once per "session" of 30s
 
@@ -81,6 +88,25 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             setAudioElement(audioRef.current);
             // Restore mute state if persisted or just sync
             audioRef.current.muted = isMuted;
+
+            // Set up Web Audio API pipeline: Audio Element → MediaElementSource → GainNode → Destination
+            // This routes all music through our own audio graph, giving us full volume control
+            // that is immune to Chrome's tab-level AEC processing when the mic is active.
+            try {
+                const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+                const ctx = new AudioContextClass();
+                const source = ctx.createMediaElementSource(audioRef.current);
+                const gain = ctx.createGain();
+                gain.gain.value = 1.0;
+                source.connect(gain);
+                gain.connect(ctx.destination);
+                musicAudioCtxRef.current = ctx;
+                gainNodeRef.current = gain;
+                setGainNode(gain);
+                mediaSourceCreated.current = true;
+            } catch (e) {
+                console.error('[Player] Failed to set up Web Audio pipeline:', e);
+            }
         }
 
         const audio = audioRef.current;
@@ -464,7 +490,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }, [currentTrack]);
 
     return (
-        <PlayerContext.Provider value={{ currentTrack, isPlaying, play, pause, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, playNext, addToQueue, removeFromQueue, reorderQueue, autoplay, toggleAutoplay, isMuted, toggleMute, audioElement, isNoiseReductionEnabled, toggleNoiseReduction }}>
+        <PlayerContext.Provider value={{ currentTrack, isPlaying, play, pause, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, playNext, addToQueue, removeFromQueue, reorderQueue, autoplay, toggleAutoplay, isMuted, toggleMute, audioElement, isNoiseReductionEnabled, toggleNoiseReduction, gainNode }}>
             {children}
             <AudioDuckingEngine />
         </PlayerContext.Provider>
