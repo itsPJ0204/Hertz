@@ -76,9 +76,9 @@ void main() {
 }
 `;
 
-export const initVideoMode = (audioElement: HTMLAudioElement, canvas: HTMLCanvasElement, genres: string[] = []) => {
-    // 1. Audio Context Setup
-    initAudioAnalyzer(audioElement);
+export const initVideoMode = (audioCtx: AudioContext, sourceNode: AudioNode, canvas: HTMLCanvasElement, genres: string[] = []) => {
+    // 1. Audio Context Setup — tap into existing pipeline
+    initAudioAnalyzer(audioCtx, sourceNode);
     const analyser = getAnalyser();
 
     if (!analyser) {

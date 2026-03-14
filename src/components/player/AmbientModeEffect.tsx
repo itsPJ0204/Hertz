@@ -5,7 +5,7 @@ import { usePlayer } from './PlayerContext';
 import { initAudioAnalyzer, getAnalyser } from '@/lib/audioAnalyzer';
 
 export function AmbientModeEffect() {
-    const { audioElement, isPlaying } = usePlayer();
+    const { audioElement, isPlaying, mediaSourceNode, musicAudioContext } = usePlayer();
     const requestRef = useRef<number | null>(null);
 
     // Smooth variables
@@ -13,10 +13,10 @@ export function AmbientModeEffect() {
     const hueRef = useRef(200);
 
     useEffect(() => {
-        if (!audioElement) return;
+        if (!audioElement || !mediaSourceNode || !musicAudioContext) return;
 
-        // Ensure the analyzer is hooked up to the player's audio
-        initAudioAnalyzer(audioElement);
+        // Tap the analyser into the existing Web Audio pipeline
+        initAudioAnalyzer(musicAudioContext, mediaSourceNode);
 
         const analyser = getAnalyser();
         if (!analyser) return;
@@ -68,7 +68,7 @@ export function AmbientModeEffect() {
             document.documentElement.style.setProperty('--ambient-intensity', '0');
             document.documentElement.style.setProperty('--ambient-spread', '0');
         };
-    }, [audioElement, isPlaying]);
+    }, [audioElement, isPlaying, mediaSourceNode, musicAudioContext]);
 
     // We render a small hidden div just to have a valid React node, 
     // though returning null is usually fine, sometimes React 18 strict mode 

@@ -32,6 +32,8 @@ interface PlayerContextType {
     isNoiseReductionEnabled: boolean;
     toggleNoiseReduction: () => void;
     gainNode: GainNode | null;
+    mediaSourceNode: MediaElementAudioSourceNode | null;
+    musicAudioContext: AudioContext | null;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -77,6 +79,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const musicAudioCtxRef = useRef<AudioContext | null>(null);
     const gainNodeRef = useRef<GainNode | null>(null);
     const [gainNode, setGainNode] = useState<GainNode | null>(null);
+    const [mediaSourceNode, setMediaSourceNode] = useState<MediaElementAudioSourceNode | null>(null);
+    const [musicAudioContext, setMusicAudioContext] = useState<AudioContext | null>(null);
     const mediaSourceCreated = useRef(false);
 
     const listeningTimeRef = useRef(0); // Total time listened to current track
@@ -103,6 +107,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                 musicAudioCtxRef.current = ctx;
                 gainNodeRef.current = gain;
                 setGainNode(gain);
+                setMediaSourceNode(source);
+                setMusicAudioContext(ctx);
                 mediaSourceCreated.current = true;
             } catch (e) {
                 console.error('[Player] Failed to set up Web Audio pipeline:', e);
@@ -500,7 +506,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }, [currentTrack]);
 
     return (
-        <PlayerContext.Provider value={{ currentTrack, isPlaying, play, pause, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, playNext, addToQueue, removeFromQueue, reorderQueue, autoplay, toggleAutoplay, isMuted, toggleMute, audioElement, isNoiseReductionEnabled, toggleNoiseReduction, gainNode }}>
+        <PlayerContext.Provider value={{ currentTrack, isPlaying, play, pause, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, playNext, addToQueue, removeFromQueue, reorderQueue, autoplay, toggleAutoplay, isMuted, toggleMute, audioElement, isNoiseReductionEnabled, toggleNoiseReduction, gainNode, mediaSourceNode, musicAudioContext }}>
             {children}
             <AudioDuckingEngine />
         </PlayerContext.Provider>

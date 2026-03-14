@@ -11,21 +11,20 @@ interface VideoModeVisualizerProps {
 
 const VideoModeVisualizer: React.FC<VideoModeVisualizerProps> = ({ onClose }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const { audioElement, currentTrack } = usePlayer();
+    const { audioElement, currentTrack, mediaSourceNode, musicAudioContext } = usePlayer();
 
     useEffect(() => {
         const canvas = canvasRef.current;
 
-        if (audioElement && canvas) {
-            // Slight delay to ensure audio is ready/playing or just connect
+        if (audioElement && canvas && mediaSourceNode && musicAudioContext) {
             const genres = currentTrack?.musicinfo?.tags?.genres || [];
-            initVideoMode(audioElement, canvas, genres);
+            initVideoMode(musicAudioContext, mediaSourceNode, canvas, genres);
         }
 
         return () => {
             destroyVideoMode();
         };
-    }, [audioElement, currentTrack]);
+    }, [audioElement, currentTrack, mediaSourceNode, musicAudioContext]);
 
     return (
         <div className="fixed inset-0 z-[9999] bg-black">
