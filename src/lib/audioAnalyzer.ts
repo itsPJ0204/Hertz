@@ -18,11 +18,15 @@ export function initAudioAnalyzer(
     sourceNode?: AudioNode
 ): void {
     // --- Overload 1: Existing pipeline (AudioContext + source node) ---
-    if (ctxOrElement instanceof AudioContext && sourceNode) {
-        audioContext = ctxOrElement;
+    // Use duck-type check instead of instanceof — webkitAudioContext may not
+    // be recognized as an instance of AudioContext in all browsers.
+    const isAudioContext = sourceNode && typeof (ctxOrElement as any)?.createAnalyser === 'function';
+    if (isAudioContext && sourceNode) {
+        const ctx = ctxOrElement as AudioContext;
+        audioContext = ctx;
 
         if (!analyser) {
-            analyser = audioContext.createAnalyser();
+            analyser = ctx.createAnalyser();
             analyser.fftSize = 512;
             analyser.smoothingTimeConstant = 0.7;
         }
@@ -35,8 +39,8 @@ export function initAudioAnalyzer(
             connected = true;
         }
 
-        if (audioContext.state === 'suspended') {
-            audioContext.resume().catch(err =>
+        if (ctx.state === 'suspended') {
+            ctx.resume().catch(err =>
                 console.warn("[AudioAnalyzer] Could not resume context:", err)
             );
         }

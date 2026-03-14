@@ -168,6 +168,7 @@ export function TranceModeEffect() {
     const requestRef = useRef<number | null>(null);
     const bgCanvasRef = useRef<HTMLCanvasElement>(null);
     const fgCanvasRef = useRef<HTMLCanvasElement>(null);
+    const disposedRef = useRef(false);
 
     // Smooth variables
     const smoothBass = useRef(0);
@@ -180,10 +181,18 @@ export function TranceModeEffect() {
         currentRot: 0, targetRot: 0
     })));
 
+    // Separate effect for WebGL setup — does NOT depend on isPlaying
+    // This prevents destroying and recreating WebGL contexts every time play/pause toggles
     useEffect(() => {
         if (!audioElement || !mediaSourceNode || !musicAudioContext) return;
 
-        initAudioAnalyzer(musicAudioContext, mediaSourceNode);
+        disposedRef.current = false;
+
+        try {
+            initAudioAnalyzer(musicAudioContext, mediaSourceNode);
+        } catch (e) {
+            console.warn('[TranceModeEffect] Failed to init audio analyzer:', e);
+        }
         const analyser = getAnalyser();
         if (!analyser) return;
 
@@ -195,19 +204,31 @@ export function TranceModeEffect() {
         // Render at lower effective resolution for performance
         const pixelRatio = Math.min(window.devicePixelRatio, 1.0);
 
-        // --- Three.js Setup: SINGLE renderer with two render passes ---
-        const bgRenderer = new THREE.WebGLRenderer({ canvas: bgCanvas, alpha: true, antialias: false, powerPreference: 'low-power' });
-        bgRenderer.setPixelRatio(pixelRatio);
-        bgRenderer.setSize(window.innerWidth, window.innerHeight);
+        let bgRenderer: THREE.WebGLRenderer;
+        let fgRenderer: THREE.WebGLRenderer;
+
+        try {
+            bgRenderer = new THREE.WebGLRenderer({ canvas: bgCanvas, alpha: true, antialias: false, powerPreference: 'low-power' });
+            bgRenderer.setPixelRatio(pixelRatio);
+            bgRenderer.setSize(window.innerWidth, window.innerHeight);
+        } catch (e) {
+            console.error('[TranceModeEffect] Failed to create BG WebGL renderer:', e);
+            return;
+        }
 
         const bgScene = new THREE.Scene();
         const bgCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-        // --- Foreground renderer ---
-        const fgRenderer = new THREE.WebGLRenderer({ canvas: fgCanvas, alpha: true, antialias: false, premultipliedAlpha: false, powerPreference: 'low-power' });
-        fgRenderer.setPixelRatio(pixelRatio);
-        fgRenderer.setSize(window.innerWidth, window.innerHeight);
-        fgRenderer.setClearColor(0x000000, 0);
+        try {
+            fgRenderer = new THREE.WebGLRenderer({ canvas: fgCanvas, alpha: true, antialias: false, premultipliedAlpha: false, powerPreference: 'low-power' });
+            fgRenderer.setPixelRatio(pixelRatio);
+            fgRenderer.setSize(window.innerWidth, window.innerHeight);
+            fgRenderer.setClearColor(0x000000, 0);
+        } catch (e) {
+            console.error('[TranceModeEffect] Failed to create FG WebGL renderer:', e);
+            bgRenderer.dispose();
+            return;
+        }
 
         const fgScene = new THREE.Scene();
 
@@ -244,6 +265,7 @@ export function TranceModeEffect() {
         fgScene.add(fgMesh);
 
         const handleResize = () => {
+            if (disposedRef.current) return;
             bgRenderer.setSize(window.innerWidth, window.innerHeight);
             fgRenderer.setSize(window.innerWidth, window.innerHeight);
             uniforms.uResolution.value.set(
@@ -260,26 +282,34 @@ export function TranceModeEffect() {
         const rootStyle = document.documentElement.style;
 
         const animate = () => {
-            requestRef.current = requestAnimationFrame(animate);
-            frameCount++;
+            // Safety: don't render if disposed
+            if (disposedRef.current) return;
 
             if (!isPlaying) {
                 smoothBass.current *= 0.95;
             } else {
-                analyser.getByteFrequencyData(dataArray);
+                try {
+                    analyser.getByteFrequencyData(dataArray);
+                } catch {
+                    // Analyser may have been disconnected
+                    requestRef.current = requestAnimationFrame(animate);
+                    return;
+                }
 
-                // Inline averaging — avoid function creation per frame
+                frameCount++;
+
+                // Inline averaging
                 let bassSum = 0;
                 for (let i = 0; i < 10; i++) bassSum += dataArray[i];
-                const normBass = bassSum / 2550; // (sum / 10) / 255
+                const normBass = bassSum / 2550;
 
                 let midSum = 0;
                 for (let i = 10; i < 80; i++) midSum += dataArray[i];
-                const normMid = midSum / 17850; // (sum / 70) / 255
+                const normMid = midSum / 17850;
 
                 let highSum = 0;
                 for (let i = 80; i < 200; i++) highSum += dataArray[i];
-                const normHigh = highSum / 30600; // (sum / 120) / 255
+                const normHigh = highSum / 30600;
 
                 smoothBass.current = smoothBass.current * 0.8 + normBass * 0.2;
 
@@ -296,8 +326,8 @@ export function TranceModeEffect() {
                 timeOffset += 0.01 + (normBass * 0.04);
                 uniforms.uTime.value = timeOffset;
 
-                // --- UI Floating Animation (update CSS vars every 2nd frame) ---
-                if (frameCount % 2 === 0) {
+                // --- UI Floating Animation (update CSS vars every 3rd frame) ---
+                if (frameCount % 3 === 0) {
                     const beatPeak = normBass > 0.6 ? normBass : smoothBass.current;
                     const intensity = Math.max(0.8, beatPeak * 5.0);
                     const spread = Math.max(0.5, beatPeak * 3.5);
@@ -340,23 +370,34 @@ export function TranceModeEffect() {
                 }
             }
 
+            // Render — protected by disposed check at top
             bgRenderer.render(bgScene, bgCamera);
             fgRenderer.render(fgScene, bgCamera);
+
+            // Schedule next frame AFTER rendering (not before) to avoid race with cleanup
+            requestRef.current = requestAnimationFrame(animate);
         };
 
         requestRef.current = requestAnimationFrame(animate);
 
         return () => {
+            // Mark as disposed FIRST — stops the animate loop immediately
+            disposedRef.current = true;
+
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
             window.removeEventListener('resize', handleResize);
 
-            bgRenderer.dispose();
-            fgRenderer.dispose();
-            bgMaterial.dispose();
-            fgMaterial.dispose();
-            geometry.dispose();
-            bgScene.clear();
-            fgScene.clear();
+            try {
+                bgRenderer.dispose();
+                fgRenderer.dispose();
+                bgMaterial.dispose();
+                fgMaterial.dispose();
+                geometry.dispose();
+                bgScene.clear();
+                fgScene.clear();
+            } catch (e) {
+                console.warn('[TranceModeEffect] Cleanup error:', e);
+            }
 
             rootStyle.setProperty('--trance-intensity', '0');
             rootStyle.setProperty('--trance-spread', '0');
@@ -367,7 +408,9 @@ export function TranceModeEffect() {
                 rootStyle.setProperty(`--trance-r-${idx}`, '0deg');
             });
         };
-    }, [audioElement, isPlaying, mediaSourceNode, musicAudioContext]);
+    // IMPORTANT: isPlaying is intentionally excluded — the animate loop reads it via closure
+    // but we do NOT want to destroy/recreate WebGL contexts on play/pause toggle
+    }, [audioElement, mediaSourceNode, musicAudioContext]);
 
     return (
         <>
