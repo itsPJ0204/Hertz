@@ -39,6 +39,7 @@ export async function GET(request: Request) {
 
         // Verify Identity First
         let debugUserEmail = 'unknown';
+        let debugErrors: string[] = [];
         try {
             const me = await spotifyApi.getMe();
             debugUserEmail = me.body.email;
@@ -60,7 +61,6 @@ export async function GET(request: Request) {
 
         let topArtistsItems: any[] = [];
         let topTracksItems: any[] = [];
-        let debugErrors: string[] = [];
 
         // 1. Try Top Artists
         try {
