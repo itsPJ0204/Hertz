@@ -165,7 +165,8 @@ export async function GET(request: Request) {
 
         processedProfile = processSpotifyData(finalArtists, topTracksItems);
         if (finalArtists.length > 0) {
-            debugErrors.push(`FirstArtistGenres:${JSON.stringify(finalArtists[0]?.genres || 'none')}`);
+            const raw = JSON.stringify(finalArtists[0]);
+            debugErrors.push(`FullArtistJSON:${encodeURIComponent(raw.substring(0, 500))}`);
         }
 
         // Removed Step 5 Hard Fallback since it's now handled in the parallel fetch
