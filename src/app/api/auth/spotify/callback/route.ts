@@ -118,29 +118,29 @@ export async function GET(request: Request) {
             debugErrors.push(`TopTrkErr:${msg}`);
         }
 
-        // 3. Process what we have so far
-        if (topArtistsItems.length > 0 || topTracksItems.length > 0) {
-            processedProfile = processSpotifyData(topArtistsItems, topTracksItems);
-        }
+        // 3. Extract all unique Artist IDs to fetch FULL unstripped artist objects
+        // Spotify recently started stripping 'genres' from the getMyTopArtists endpoint.
+        // We MUST use getArtists(ids) to guarantee we get the genres back!
+        const allArtistIds = new Set<string>();
+        topArtistsItems.forEach(a => allArtistIds.add(a.id));
+        topTracksItems.forEach(t => t?.artists?.forEach((a: any) => allArtistIds.add(a.id)));
 
-        // 4. Backfill from Top Tracks if Artists are missing
-        if (processedProfile.top_artists.length === 0 && topTracksItems.length > 0) {
-            console.log('[Spotify] top_artists is empty. Attempting backfill from Top Tracks...');
-            const artistIds = new Set<string>();
-            topTracksItems.forEach((t: any) => t?.artists?.forEach((a: any) => artistIds.add(a.id)));
-            const artistIdArray = Array.from(artistIds).slice(0, 50);
+        const artistIdArray = Array.from(allArtistIds).slice(0, 50); // Spotify limit is 50
+        let finalArtists: any[] = [];
 
-            if (artistIdArray.length > 0) {
-                try {
-                    const artistsResponse = await spotifyApi.getArtists(artistIdArray);
-                    topArtistsItems = artistsResponse.body.artists;
-                    console.log(`[Spotify] Backfilled ${topArtistsItems.length} artists from Top Tracks`);
-                    processedProfile = processSpotifyData(topArtistsItems, topTracksItems);
-                } catch (e) {
-                    console.error('[Spotify] Failed to fetch backfill artists:', e);
-                }
+        if (artistIdArray.length > 0) {
+            console.log(`[Spotify] Fetching unstripped data for ${artistIdArray.length} unique artists...`);
+            try {
+                const artistsResponse = await spotifyApi.getArtists(artistIdArray);
+                finalArtists = artistsResponse.body.artists;
+                console.log(`[Spotify] Success: Fetched unstripped artists`);
+            } catch (e) {
+                console.error('[Spotify] Failed to fetch unstripped artists:', e);
+                finalArtists = topArtistsItems; // Fallback to stripped ones if it fails
             }
         }
+
+        processedProfile = processSpotifyData(finalArtists, topTracksItems);
 
         // 5. Hard Fallback: Saved Tracks
         if (processedProfile.top_artists.length === 0) {
