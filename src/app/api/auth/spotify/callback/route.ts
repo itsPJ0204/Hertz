@@ -80,7 +80,8 @@ export async function GET(request: Request) {
         } catch (e: any) {
             console.error('[Spotify] Failed to fetch Top Artists. Error:', e.message || e);
             if (e.body) console.error('[Spotify] Top Artists Error Body:', JSON.stringify(e.body));
-            debugErrors.push(`TopArtErr:${e.statusCode || e.message}`);
+            const msg = e.body?.error?.message || e.body?.error_description || e.message || e.statusCode;
+            debugErrors.push(`TopArtErr:${msg}`);
         }
 
         // 2. Try Top Tracks
@@ -104,7 +105,8 @@ export async function GET(request: Request) {
         } catch (e: any) {
             console.error('[Spotify] Failed to fetch Top Tracks. Error:', e.message || e);
             if (e.body) console.error('[Spotify] Top Tracks Error Body:', JSON.stringify(e.body));
-            debugErrors.push(`TopTrkErr:${e.statusCode || e.message}`);
+            const msg = e.body?.error?.message || e.body?.error_description || e.message || e.statusCode;
+            debugErrors.push(`TopTrkErr:${msg}`);
         }
 
         // 3. Process what we have so far
@@ -161,7 +163,8 @@ export async function GET(request: Request) {
             } catch (e: any) {
                 console.error('[Spotify] Failed to fetch Saved Tracks. Error:', e.message || e);
                 if (e.body) console.error('[Spotify] Saved Tracks Error Body:', JSON.stringify(e.body));
-                debugErrors.push(`LibErr:${e.statusCode || e.message}`);
+                const msg = e.body?.error?.message || e.body?.error_description || e.message || e.statusCode;
+                debugErrors.push(`LibErr:${msg}`);
             }
         }
 
