@@ -136,12 +136,27 @@ export async function GET(request: Request) {
                 });
                 const text = await res.text();
                 if (!res.ok) {
-                    debugErrors.push(`GetArtistsRawErr:${res.status}-${text}`);
-                    finalArtists = topArtistsItems; 
+                    console.log(`[Spotify] User-level getArtists failed (${res.status}). Attempting App-level fallback...`);
+                    const ccData = await spotifyApi.clientCredentialsGrant();
+                    const ccToken = ccData.body.access_token;
+                    
+                    const ccRes = await fetch(`https://api.spotify.com/v1/artists?ids=${artistIdArray.join(',')}`, {
+                        headers: { 'Authorization': `Bearer ${ccToken}` }
+                    });
+                    const ccText = await ccRes.text();
+                    
+                    if (!ccRes.ok) {
+                        debugErrors.push(`GetArtistsAppErr:${ccRes.status}-${ccText}`);
+                        finalArtists = topArtistsItems;
+                    } else {
+                        const data = JSON.parse(ccText);
+                        finalArtists = data.artists;
+                        console.log(`[Spotify] Success: Fetched unstripped artists via App token`);
+                    }
                 } else {
                     const data = JSON.parse(text);
                     finalArtists = data.artists;
-                    console.log(`[Spotify] Success: Fetched unstripped artists`);
+                    console.log(`[Spotify] Success: Fetched unstripped artists via User token`);
                 }
             } catch (e: any) {
                 console.error('[Spotify] Failed to fetch unstripped artists:', e);
