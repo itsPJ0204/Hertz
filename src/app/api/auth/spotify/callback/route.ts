@@ -60,33 +60,49 @@ export async function GET(request: Request) {
 
         // 1. Try Top Artists
         try {
+            console.log('[Spotify] Starting Top Artists fetch...');
             const timeRanges: ('short_term' | 'medium_term' | 'long_term')[] = ['short_term', 'medium_term', 'long_term'];
             for (const range of timeRanges) {
+                console.log(`[Spotify] Fetching Top Artists for range: ${range}`);
                 const topArtists = await spotifyApi.getMyTopArtists({ limit: 50, time_range: range });
-                if (topArtists.body.items.length > 0) {
+                console.log(`[Spotify] Top Artists response (${range}):`, JSON.stringify({
+                    total: topArtists.body.total,
+                    limit: topArtists.body.limit,
+                    items_length: topArtists.body.items?.length,
+                }));
+                if (topArtists.body.items && topArtists.body.items.length > 0) {
                     topArtistsItems = topArtists.body.items;
-                    console.log(`[Spotify] Fetched ${topArtistsItems.length} Top Artists (${range})`);
+                    console.log(`[Spotify] Success: Fetched ${topArtistsItems.length} Top Artists (${range})`);
                     break;
                 }
             }
         } catch (e: any) {
-            console.error('[Spotify] Failed to fetch Top Artists:', e.message || e);
+            console.error('[Spotify] Failed to fetch Top Artists. Error:', e.message || e);
+            if (e.body) console.error('[Spotify] Top Artists Error Body:', JSON.stringify(e.body));
             if (e.statusCode) console.error(`[Spotify] Top Artists Status: ${e.statusCode}`);
         }
 
         // 2. Try Top Tracks
         try {
+            console.log('[Spotify] Starting Top Tracks fetch...');
             const timeRanges: ('short_term' | 'medium_term' | 'long_term')[] = ['short_term', 'medium_term', 'long_term'];
             for (const range of timeRanges) {
+                console.log(`[Spotify] Fetching Top Tracks for range: ${range}`);
                 const topTracks = await spotifyApi.getMyTopTracks({ limit: 50, time_range: range });
-                if (topTracks.body.items.length > 0) {
+                console.log(`[Spotify] Top Tracks response (${range}):`, JSON.stringify({
+                    total: topTracks.body.total,
+                    limit: topTracks.body.limit,
+                    items_length: topTracks.body.items?.length,
+                }));
+                if (topTracks.body.items && topTracks.body.items.length > 0) {
                     topTracksItems = topTracks.body.items;
-                    console.log(`[Spotify] Fetched ${topTracksItems.length} Top Tracks (${range})`);
+                    console.log(`[Spotify] Success: Fetched ${topTracksItems.length} Top Tracks (${range})`);
                     break;
                 }
             }
         } catch (e: any) {
-            console.error('[Spotify] Failed to fetch Top Tracks:', e.message || e);
+            console.error('[Spotify] Failed to fetch Top Tracks. Error:', e.message || e);
+            if (e.body) console.error('[Spotify] Top Tracks Error Body:', JSON.stringify(e.body));
             if (e.statusCode) console.error(`[Spotify] Top Tracks Status: ${e.statusCode}`);
         }
 
@@ -119,22 +135,31 @@ export async function GET(request: Request) {
             console.log('[Spotify] Still no artists. Attempting Saved Tracks (Library)...');
             try {
                 const savedTracks = await spotifyApi.getMySavedTracks({ limit: 50 });
-                const savedItems = savedTracks.body.items.map((i: any) => i.track);
-                console.log(`[Spotify] Fetched ${savedItems.length} Saved Tracks`);
+                console.log(`[Spotify] Saved Tracks response:`, JSON.stringify({
+                    total: savedTracks.body.total,
+                    limit: savedTracks.body.limit,
+                    items_length: savedTracks.body.items?.length,
+                }));
+                
+                if (savedTracks.body.items && savedTracks.body.items.length > 0) {
+                    const savedItems = savedTracks.body.items.map((i: any) => i.track);
+                    console.log(`[Spotify] Success: Fetched ${savedItems.length} Saved Tracks`);
 
-                // Extract Artists
-                const artistIds = new Set<string>();
-                savedItems.forEach((t: any) => t.artists.forEach((a: any) => artistIds.add(a.id)));
-                const artistIdArray = Array.from(artistIds).slice(0, 50);
+                    // Extract Artists
+                    const artistIds = new Set<string>();
+                    savedItems.forEach((t: any) => t.artists.forEach((a: any) => artistIds.add(a.id)));
+                    const artistIdArray = Array.from(artistIds).slice(0, 50);
 
-                if (artistIdArray.length > 0) {
-                    const artistsResponse = await spotifyApi.getArtists(artistIdArray);
-                    const libArtists = artistsResponse.body.artists;
-                    console.log(`[Spotify] Fetched ${libArtists.length} artists from Library`);
-                    processedProfile = processSpotifyData(libArtists, savedItems);
+                    if (artistIdArray.length > 0) {
+                        const artistsResponse = await spotifyApi.getArtists(artistIdArray);
+                        const libArtists = artistsResponse.body.artists;
+                        console.log(`[Spotify] Fetched ${libArtists.length} artists from Library Tracks`);
+                        processedProfile = processSpotifyData(libArtists, savedItems);
+                    }
                 }
             } catch (e: any) {
-                console.error('[Spotify] Failed to fetch Saved Tracks:', e.message || e);
+                console.error('[Spotify] Failed to fetch Saved Tracks. Error:', e.message || e);
+                if (e.body) console.error('[Spotify] Saved Tracks Error Body:', JSON.stringify(e.body));
                 if (e.statusCode) console.error(`[Spotify] Saved Tracks Status: ${e.statusCode}`);
             }
         }
