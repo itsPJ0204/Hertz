@@ -4,14 +4,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicProfileClient } from "./PublicProfileClient";
 
-export default async function PublicProfilePage({ params }: { params: { id: string } }) {
+export default async function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const supabase = await createClient();
 
     // Get current logged-in user
     const { data: { user } } = await supabase.auth.getUser();
 
     // If it's their own profile, redirect to their edit profile page
-    if (user && user.id === params.id) {
+    if (user && user.id === id) {
         return (
             <div className="min-h-screen bg-clay-bg flex items-center justify-center font-black">
                 <meta httpEquiv="refresh" content={`0; url=/profile`} />
@@ -23,7 +24,7 @@ export default async function PublicProfilePage({ params }: { params: { id: stri
     const { data: profile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', id)
         .single();
 
     if (!profile) {
@@ -32,13 +33,13 @@ export default async function PublicProfilePage({ params }: { params: { id: stri
 
     // Fetch Stats
     const [likesRes, matchesRes, mProfileRes, songsRes] = await Promise.all([
-        supabase.from('likes').select('*', { count: 'exact', head: true }).eq('user_id', params.id),
+        supabase.from('likes').select('*', { count: 'exact', head: true }).eq('user_id', id),
         supabase.from('connections')
             .select('*', { count: 'exact', head: true })
-            .or(`user_a.eq.${params.id},user_b.eq.${params.id}`)
+            .or(`user_a.eq.${id},user_b.eq.${id}`)
             .eq('status', 'connected'),
-        supabase.from('user_music_profiles').select('*').eq('user_id', params.id).single(),
-        supabase.from('songs').select('*').eq('user_id', params.id).order('created_at', { ascending: false })
+        supabase.from('user_music_profiles').select('*').eq('user_id', id).single(),
+        supabase.from('songs').select('*').eq('user_id', id).order('created_at', { ascending: false })
     ]);
 
     const stats = {
@@ -55,7 +56,7 @@ export default async function PublicProfilePage({ params }: { params: { id: stri
         const { data: connection } = await supabase
             .from('connections')
             .select('status')
-            .or(`and(user_a.eq.${user.id},user_b.eq.${params.id}),and(user_a.eq.${params.id},user_b.eq.${user.id})`)
+            .or(`and(user_a.eq.${user.id},user_b.eq.${id}),and(user_a.eq.${id},user_b.eq.${user.id})`)
             .single();
 
         if (connection) {
@@ -90,7 +91,7 @@ export default async function PublicProfilePage({ params }: { params: { id: stri
                         {user && (
                             <div className="mt-6 w-full max-w-xs">
                                 <PublicProfileClient 
-                                    targetId={params.id} 
+                                    targetId={id} 
                                     currentUserId={user.id} 
                                     initialStatus={connectionStatus as any} 
                                 />
