@@ -122,10 +122,10 @@ export async function GET(request: Request) {
         // Spotify recently started stripping 'genres' from the getMyTopArtists endpoint.
         // We MUST use getArtists(ids) to guarantee we get the genres back!
         const allArtistIds = new Set<string>();
-        topArtistsItems.forEach(a => allArtistIds.add(a.id));
-        topTracksItems.forEach(t => t?.artists?.forEach((a: any) => allArtistIds.add(a.id)));
+        topArtistsItems.forEach(a => { if (a?.id) allArtistIds.add(a.id); });
+        topTracksItems.forEach(t => t?.artists?.forEach((a: any) => { if (a?.id) allArtistIds.add(a.id); }));
 
-        const artistIdArray = Array.from(allArtistIds).slice(0, 50); // Spotify limit is 50
+        const artistIdArray = Array.from(allArtistIds).filter(id => id && typeof id === 'string').slice(0, 50); // Spotify limit is 50
         let finalArtists: any[] = [];
 
         if (artistIdArray.length > 0) {
@@ -134,8 +134,9 @@ export async function GET(request: Request) {
                 const artistsResponse = await spotifyApi.getArtists(artistIdArray);
                 finalArtists = artistsResponse.body.artists;
                 console.log(`[Spotify] Success: Fetched unstripped artists`);
-            } catch (e) {
+            } catch (e: any) {
                 console.error('[Spotify] Failed to fetch unstripped artists:', e);
+                debugErrors.push(`GetArtistsErr:${e.statusCode || e.message}`);
                 finalArtists = topArtistsItems; // Fallback to stripped ones if it fails
             }
         }
@@ -230,7 +231,8 @@ export async function GET(request: Request) {
             return NextResponse.redirect(new URL('/profile?error=db_save_failed', request.url));
         }
 
-        return NextResponse.redirect(new URL(`/profile?spotify=connected&debug_success=A${artistCount}_G${genreCount}_V${vectorSize}`, request.url));
+        const successTrace = debugErrors.length > 0 ? `_E_${encodeURIComponent(debugErrors.join('-'))}` : '';
+        return NextResponse.redirect(new URL(`/profile?spotify=connected&debug_success=A${artistCount}_G${genreCount}_V${vectorSize}${successTrace}`, request.url));
 
     } catch (err: any) {
         console.error('Error in Spotify Callback:', err);
