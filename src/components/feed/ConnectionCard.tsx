@@ -61,26 +61,27 @@ export function ConnectionCard({ id, name, avatar_url, matchScore, sharedInteres
             </div>
 
             {/* Avatar with Image Support */}
-            <div
-                className="w-16 h-16 min-w-[4rem] md:w-24 md:h-24 md:min-w-[6rem] rounded-full border-2 md:border-4 border-black md:mb-4 flex items-center justify-center bg-gray-100 overflow-hidden relative cursor-pointer hover:border-clay-primary transition-colors flex-shrink-0"
-                onClick={() => setIsImageOpen(true)}
-            >
-                {avatar_url ? (
-                    <img
-                        src={avatar_url}
-                        alt={name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
-                        }}
-                    />
-                ) : (
-                    <User className="opacity-50 w-8 h-8 md:w-10 md:h-10" />
-                )}
-                {/* Fallback for error */}
-                <User className="absolute opacity-50 fallback-icon hidden pointer-events-none w-8 h-8 md:w-10 md:h-10" />
-            </div>
+            <Link href={`/profile/${id}`} className="block relative flex-shrink-0">
+                <div
+                    className="w-16 h-16 min-w-[4rem] md:w-24 md:h-24 md:min-w-[6rem] rounded-full border-2 md:border-4 border-black md:mb-4 flex items-center justify-center bg-gray-100 overflow-hidden relative cursor-pointer hover:border-clay-primary transition-colors"
+                >
+                    {avatar_url ? (
+                        <img
+                            src={avatar_url}
+                            alt={name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                            }}
+                        />
+                    ) : (
+                        <User className="opacity-50 w-8 h-8 md:w-10 md:h-10" />
+                    )}
+                    {/* Fallback for error */}
+                    <User className="absolute opacity-50 fallback-icon hidden pointer-events-none w-8 h-8 md:w-10 md:h-10" />
+                </div>
+            </Link>
 
             <ImageModal
                 src={avatar_url || ""}
@@ -92,7 +93,9 @@ export function ConnectionCard({ id, name, avatar_url, matchScore, sharedInteres
             {/* Middle Section (Mobile) / Center Section (Desktop) */}
             <div className="flex-1 flex flex-col md:items-center w-full">
                 <div className="flex items-center gap-2">
-                    <h3 className="text-lg md:text-xl font-black uppercase italic truncate">{name}</h3>
+                    <Link href={`/profile/${id}`} className="hover:underline">
+                        <h3 className="text-lg md:text-xl font-black uppercase italic truncate">{name}</h3>
+                    </Link>
                     {/* Mobile Badge */}
                     <span className={`md:hidden text-[9px] font-black border-2 border-black px-1.5 py-0.5 uppercase ${
                         recommendationSource === 'Spotify' ? 'bg-[#1DB954] text-white' : 

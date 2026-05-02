@@ -18,6 +18,7 @@ export default function ProfilePage() {
 
     const [user, setUser] = useState<any>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
+    const [musicProfile, setMusicProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
     const supabase = createClient();
@@ -88,19 +89,21 @@ export default function ProfilePage() {
                 setTempName(user.user_metadata?.full_name || "");
             }
 
-            // Fetch Stats concurrently
-            const [likesRes, matchesRes] = await Promise.all([
+            // Fetch Stats and Music Profile concurrently
+            const [likesRes, matchesRes, mProfileRes] = await Promise.all([
                 supabase.from('likes').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
                 supabase.from('connections')
                     .select('*', { count: 'exact', head: true })
                     .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
-                    .eq('status', 'connected')
+                    .eq('status', 'connected'),
+                supabase.from('user_music_profiles').select('*').eq('user_id', user.id).single()
             ]);
 
             setStats({
                 likes: likesRes.count || 0,
                 matches: matchesRes.count || 0
             });
+            setMusicProfile(mProfileRes.data);
 
         } catch (error) {
             console.error('Error loading user data!', error);
@@ -173,6 +176,17 @@ export default function ProfilePage() {
         router.push('/login');
     }
 
+    async function handleSpotifyUnlink() {
+        if (!confirm("Are you sure you want to unlink your Spotify account? This will remove your listening data.")) return;
+        try {
+            await supabase.from('user_music_profiles').delete().eq('user_id', user.id);
+            setMusicProfile(null);
+            alert("Spotify account unlinked successfully.");
+        } catch (error: any) {
+            alert("Failed to unlink: " + error.message);
+        }
+    }
+
     if (loading) {
         return <div className="min-h-screen bg-clay-bg flex items-center justify-center font-black animate-pulse">LOADING PROFILE...</div>;
     }
@@ -243,6 +257,53 @@ export default function ProfilePage() {
                                     <span className="block text-2xl font-black">{stats.matches}</span>
                                     <span className="text-xs font-bold uppercase opacity-60">Frequencies</span>
                                 </div>
+                            </div>
+
+                            {/* SPOTIFY SECTION */}
+                            <div className="border-t-2 border-black pt-8">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-black uppercase text-xl flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-[#1DB954]"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.84.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.6.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                                        Spotify
+                                    </h3>
+                                    {musicProfile?.is_spotify_linked ? (
+                                        <button onClick={handleSpotifyUnlink} className="text-xs font-black uppercase border-2 border-black px-3 py-1 hover:bg-red-100 text-red-600 transition-colors">
+                                            Unlink
+                                        </button>
+                                    ) : (
+                                        <button onClick={() => window.location.href = '/api/auth/spotify/login'} className="text-xs font-black uppercase border-2 border-black px-3 py-1 bg-[#1DB954] text-white hover:bg-[#1ed760] transition-colors">
+                                            Connect
+                                        </button>
+                                    )}
+                                </div>
+
+                                {musicProfile?.is_spotify_linked && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-clay-bg p-4 border-2 border-black">
+                                            <h4 className="font-black uppercase mb-2 text-sm opacity-60">Top Artists</h4>
+                                            <ul className="space-y-1">
+                                                {(musicProfile.top_artists || []).slice(0, 5).map((a: any, i: number) => (
+                                                    <li key={i} className="text-sm font-bold truncate">{i + 1}. {a.name}</li>
+                                                ))}
+                                                {(!musicProfile.top_artists || musicProfile.top_artists.length === 0) && (
+                                                    <li className="text-sm font-bold opacity-50">No artists found</li>
+                                                )}
+                                            </ul>
+                                        </div>
+                                        <div className="bg-clay-bg p-4 border-2 border-black">
+                                            <h4 className="font-black uppercase mb-2 text-sm opacity-60">Top Tracks</h4>
+                                            <ul className="space-y-1">
+                                                {/* Saved tracks usually is named saved_tracks or we fallback to recently played */}
+                                                {(musicProfile.saved_tracks || musicProfile.recently_played || []).slice(0, 5).map((t: any, i: number) => (
+                                                    <li key={i} className="text-sm font-bold truncate">{i + 1}. {t.name}</li>
+                                                ))}
+                                                {(!(musicProfile.saved_tracks || musicProfile.recently_played)?.length) && (
+                                                    <li className="text-sm font-bold opacity-50">No tracks found</li>
+                                                )}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* MY UPLOADS SECTION */}

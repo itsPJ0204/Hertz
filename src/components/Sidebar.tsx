@@ -151,32 +151,7 @@ export function Sidebar({ collapsed = false, toggle, onCloseMobile }: SidebarPro
                     )
                 })}
 
-                {/* Spotify Link Button */}
-                <div className="pt-4 border-t border-gray-800 mt-4">
-                    {spotifyLinked ? (
-                        <div className={`flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-lg bg-green-900/20 text-green-400 group relative ${collapsed ? "justify-center" : ""}`}>
-                            <div className="relative">
-                                <span className="text-xl">✅</span>
-                            </div>
-                            {!collapsed && (
-                                <span className="uppercase text-sm tracking-wide whitespace-nowrap font-bold">Spotify Linked</span>
-                            )}
-                        </div>
-                    ) : (
-                        <button
-                            onClick={handleSpotifyLink}
-                            title={collapsed ? "Link Spotify" : ""}
-                            className={`w-full flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-lg transition-all group relative hover:bg-green-600/10 text-gray-300 hover:text-green-400 ${collapsed ? "justify-center" : ""}`}
-                        >
-                            <div className="relative">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 group-hover:scale-110 transition-transform"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path><path d="M12 8v8"></path></svg>
-                            </div>
-                            {!collapsed && (
-                                <span className="uppercase text-sm tracking-wide whitespace-nowrap">Link Spotify</span>
-                            )}
-                        </button>
-                    )}
-                </div>
+
 
                 {/* Go Premium CTA */}
                 <div className="pt-4 border-t border-gray-800 mt-2">
