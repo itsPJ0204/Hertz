@@ -151,6 +151,9 @@ export async function GET(request: Request) {
         }
 
         processedProfile = processSpotifyData(finalArtists, topTracksItems);
+        if (finalArtists.length > 0) {
+            debugErrors.push(`FirstArtistGenres:${JSON.stringify(finalArtists[0]?.genres || 'none')}`);
+        }
 
         // 5. Hard Fallback: Saved Tracks
         if (processedProfile.top_artists.length === 0) {
