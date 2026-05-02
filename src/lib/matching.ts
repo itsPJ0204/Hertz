@@ -64,6 +64,7 @@ export interface MatchedUser {
     matchScore: number;
     vibeScore?: number;
     spotifyScore?: number;
+    recommendationSource: 'Hz' | 'Spotify' | 'Both';
     sharedInterests: string[];
 }
 
@@ -98,6 +99,13 @@ export async function getTopMatches(currentUserId: string): Promise<MatchedUser[
         // For Vibe Matches, we keep the existing > 0.1 threshold
 
         if (vibeScore > 0.1 || spotifyScore > 0.1) {
+            let recommendationSource: 'Hz' | 'Spotify' | 'Both' = 'Hz';
+            if (vibeScore >= 0.8 && spotifyScore >= 0.8) {
+                recommendationSource = 'Both';
+            } else if (spotifyScore > vibeScore) {
+                recommendationSource = 'Spotify';
+            }
+
             matches.push({
                 id: user.id,
                 name: user.full_name || 'Anonymous',
@@ -105,14 +113,15 @@ export async function getTopMatches(currentUserId: string): Promise<MatchedUser[
                 matchScore: Math.round(Math.max(vibeScore, spotifyScore) * 100), // Use highest for generic display
                 vibeScore: Math.round(vibeScore * 100),
                 spotifyScore: Math.round(spotifyScore * 100),
-                sharedInterests: ['Shared Vibe'] // detailed shared interests logic to be added
+                recommendationSource,
+                sharedInterests: recommendationSource === 'Spotify' ? ['Shared Artists'] : ['Shared Vibe']
             });
         }
     }
 
     console.log(`[Matching] Found ${matches.length} matches for User ${currentUserId}`);
     // Sort by highest overall score
-    return matches.sort((a, b) => Math.max(b.vibeScore || 0, b.spotifyScore || 0) - Math.max(a.vibeScore || 0, a.spotifyScore || 0));
+    return matches.sort((a, b) => b.matchScore - a.matchScore);
 }
 
 export async function getSpotifyMatchScore(userIdA: string, userIdB: string): Promise<number> {
@@ -120,7 +129,7 @@ export async function getSpotifyMatchScore(userIdA: string, userIdB: string): Pr
 
     const { data: profiles } = await supabase
         .from('user_music_profiles')
-        .select('user_id, genre_vector, top_artists')
+        .select('user_id, top_artists, followed_artists, saved_tracks, recently_played')
         .in('user_id', [userIdA, userIdB]);
 
     if (!profiles || profiles.length !== 2) return 0;
@@ -130,38 +139,29 @@ export async function getSpotifyMatchScore(userIdA: string, userIdB: string): Pr
 
     if (!profileA || !profileB) return 0;
 
-    // 1. Cosine Similarity for Genre Vectors
-    const vecA = profileA.genre_vector || {};
-    const vecB = profileB.genre_vector || {};
+    // Helper for Jaccard
+    const getJaccard = (arrA: any[] | null, arrB: any[] | null): number => {
+        const setA = new Set((arrA || []).map((i: any) => i.id || i.name));
+        const setB = new Set((arrB || []).map((i: any) => i.id || i.name));
+        if (setA.size === 0 && setB.size === 0) return 0; // Both empty, no similarity
+        if (setA.size === 0 || setB.size === 0) return 0; // One empty, no similarity
+        const intersection = new Set([...setA].filter(x => setB.has(x)));
+        const union = new Set([...setA, ...setB]);
+        return intersection.size / union.size;
+    };
 
-    const genres = new Set([...Object.keys(vecA), ...Object.keys(vecB)]);
-    let dotProduct = 0;
-    let magnitudeA = 0;
-    let magnitudeB = 0;
+    // Calculate Multi-Layer Overlap
+    const topArtistsSim = getJaccard(profileA.top_artists as any[], profileB.top_artists as any[]);
+    const followedSim = getJaccard(profileA.followed_artists as any[], profileB.followed_artists as any[]);
+    const savedTracksSim = getJaccard(profileA.saved_tracks as any[], profileB.saved_tracks as any[]);
+    const recentSim = getJaccard(profileA.recently_played as any[], profileB.recently_played as any[]);
 
-    genres.forEach(genre => {
-        const valA = vecA[genre] || 0;
-        const valB = vecB[genre] || 0;
-        dotProduct += valA * valB;
-        magnitudeA += valA * valA;
-        magnitudeB += valB * valB;
-    });
+    // Weights: 40% Top Artists, 30% Followed, 20% Saved, 10% Recent
+    const weightedScore = 
+        (topArtistsSim * 0.40) + 
+        (followedSim * 0.30) + 
+        (savedTracksSim * 0.20) + 
+        (recentSim * 0.10);
 
-    const genreSimilarity = (magnitudeA && magnitudeB)
-        ? dotProduct / (Math.sqrt(magnitudeA) * Math.sqrt(magnitudeB))
-        : 0;
-
-    // 2. Jaccard Index for Top Artists
-    const artistsA = new Set((profileA.top_artists as any[])?.map(a => a.name) || []);
-    const artistsB = new Set((profileB.top_artists as any[])?.map(a => a.name) || []);
-
-    let artistSimilarity = 0;
-    if (artistsA.size > 0 && artistsB.size > 0) {
-        const intersection = new Set([...artistsA].filter(x => artistsB.has(x)));
-        const union = new Set([...artistsA, ...artistsB]);
-        artistSimilarity = intersection.size / union.size;
-    }
-
-    // Weighted Score: 60% Genre, 40% Artists
-    return (genreSimilarity * 0.6) + (artistSimilarity * 0.4);
+    return weightedScore;
 }

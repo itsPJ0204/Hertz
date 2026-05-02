@@ -14,9 +14,10 @@ interface ConnectionProps {
     sharedInterests: string[];
     initialStatus?: 'none' | 'pending' | 'connected';
     currentUserId?: string;
+    recommendationSource?: 'Hz' | 'Spotify' | 'Both';
 }
 
-export function ConnectionCard({ id, name, avatar_url, matchScore, sharedInterests, initialStatus = 'none', currentUserId }: ConnectionProps) {
+export function ConnectionCard({ id, name, avatar_url, matchScore, sharedInterests, initialStatus = 'none', currentUserId, recommendationSource = 'Hz' }: ConnectionProps) {
     const [status, setStatus] = useState(initialStatus);
     const [loading, setLoading] = useState(false);
     const [isImageOpen, setIsImageOpen] = useState(false);
@@ -46,10 +47,22 @@ export function ConnectionCard({ id, name, avatar_url, matchScore, sharedInteres
     };
 
     return (
-        <div className="bg-white border-2 border-black p-6 shadow-[4px_4px_0px_0px_#000000] flex flex-col items-center text-center">
+        <div className="bg-white border-2 border-black p-4 md:p-6 shadow-[4px_4px_0px_0px_#000000] flex flex-row md:flex-col items-center md:text-center relative gap-4 md:gap-0">
+            
+            {/* Desktop Badge (Top Right) */}
+            <div className="hidden md:block absolute top-3 right-3">
+                <span className={`text-[10px] font-black border-2 border-black px-2 py-0.5 uppercase ${
+                    recommendationSource === 'Spotify' ? 'bg-[#1DB954] text-white' : 
+                    recommendationSource === 'Both' ? 'bg-purple-500 text-white' : 
+                    'bg-clay-primary text-white'
+                }`}>
+                    {recommendationSource}
+                </span>
+            </div>
+
             {/* Avatar with Image Support */}
             <div
-                className="w-24 h-24 rounded-full border-4 border-black mb-4 flex items-center justify-center bg-gray-100 overflow-hidden relative cursor-pointer hover:border-clay-primary transition-colors"
+                className="w-16 h-16 min-w-[4rem] md:w-24 md:h-24 md:min-w-[6rem] rounded-full border-2 md:border-4 border-black md:mb-4 flex items-center justify-center bg-gray-100 overflow-hidden relative cursor-pointer hover:border-clay-primary transition-colors flex-shrink-0"
                 onClick={() => setIsImageOpen(true)}
             >
                 {avatar_url ? (
@@ -63,10 +76,10 @@ export function ConnectionCard({ id, name, avatar_url, matchScore, sharedInteres
                         }}
                     />
                 ) : (
-                    <User size={40} className="opacity-50" />
+                    <User className="opacity-50 w-8 h-8 md:w-10 md:h-10" />
                 )}
                 {/* Fallback for error */}
-                <User size={40} className="absolute opacity-50 fallback-icon hidden pointer-events-none" />
+                <User className="absolute opacity-50 fallback-icon hidden pointer-events-none w-8 h-8 md:w-10 md:h-10" />
             </div>
 
             <ImageModal
@@ -76,37 +89,56 @@ export function ConnectionCard({ id, name, avatar_url, matchScore, sharedInteres
                 onClose={() => setIsImageOpen(false)}
             />
 
-            <h3 className="text-xl font-black uppercase italic">{name}</h3>
-            <div className="text-clay-primary font-black text-3xl my-2 tracking-tighter">{matchScore}% MATCH</div>
-
-            <div className="flex flex-wrap gap-2 justify-center mb-6">
-                {sharedInterests.map(i => (
-                    <span key={i} className="text-xs font-black border-2 border-black px-3 py-1 bg-white uppercase skew-x-[-10deg]">
-                        {i}
+            {/* Middle Section (Mobile) / Center Section (Desktop) */}
+            <div className="flex-1 flex flex-col md:items-center w-full">
+                <div className="flex items-center gap-2">
+                    <h3 className="text-lg md:text-xl font-black uppercase italic truncate">{name}</h3>
+                    {/* Mobile Badge */}
+                    <span className={`md:hidden text-[9px] font-black border-2 border-black px-1.5 py-0.5 uppercase ${
+                        recommendationSource === 'Spotify' ? 'bg-[#1DB954] text-white' : 
+                        recommendationSource === 'Both' ? 'bg-purple-500 text-white' : 
+                        'bg-clay-primary text-white'
+                    }`}>
+                        {recommendationSource}
                     </span>
-                ))}
+                </div>
+                
+                <div className="text-clay-primary font-black text-xl md:text-3xl my-1 md:my-2 tracking-tighter">
+                    {matchScore}% <span className="md:hidden text-xs text-black">MATCH</span>
+                </div>
+
+                <div className="hidden md:flex flex-wrap gap-2 justify-center mb-6">
+                    {sharedInterests.map(i => (
+                        <span key={i} className="text-xs font-black border-2 border-black px-3 py-1 bg-white uppercase skew-x-[-10deg]">
+                            {i}
+                        </span>
+                    ))}
+                </div>
             </div>
 
-            {status === 'connected' ? (
-                <Link href={`/chat/${id}`} className="w-full bg-black text-white font-black py-4 hover:bg-clay-primary transition-all flex items-center justify-center gap-2 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none uppercase">
-                    <MessageCircle size={20} />
-                    Chat Now
-                </Link>
-            ) : status === 'pending' ? (
-                <button disabled className="w-full bg-gray-200 text-gray-500 font-black py-4 border-2 border-black cursor-not-allowed flex items-center justify-center gap-2 uppercase">
-                    <Clock size={20} />
-                    Signal Sent
-                </button>
-            ) : (
-                <button
-                    onClick={handleConnect}
-                    disabled={loading}
-                    className="w-full bg-clay-secondary text-black font-black py-4 hover:bg-clay-primary hover:text-white transition-all flex items-center justify-center gap-2 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none uppercase disabled:opacity-50"
-                >
-                    <Send size={20} />
-                    {loading ? "Sending..." : "Send Signal"}
-                </button>
-            )}
+            {/* Actions (Right Mobile / Bottom Desktop) */}
+            <div className="flex-shrink-0 md:w-full">
+                {status === 'connected' ? (
+                    <Link href={`/chat/${id}`} className="md:w-full bg-black text-white font-black p-3 md:py-4 hover:bg-clay-primary transition-all flex items-center justify-center gap-2 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none uppercase rounded-full md:rounded-none">
+                        <MessageCircle size={20} />
+                        <span className="hidden md:inline">Chat Now</span>
+                    </Link>
+                ) : status === 'pending' ? (
+                    <button disabled className="md:w-full bg-gray-200 text-gray-500 font-black p-3 md:py-4 border-2 border-black cursor-not-allowed flex items-center justify-center gap-2 uppercase rounded-full md:rounded-none">
+                        <Clock size={20} />
+                        <span className="hidden md:inline">Sent</span>
+                    </button>
+                ) : (
+                    <button
+                        onClick={handleConnect}
+                        disabled={loading}
+                        className="md:w-full bg-clay-secondary text-black font-black p-3 md:py-4 hover:bg-clay-primary hover:text-white transition-all flex items-center justify-center gap-2 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none uppercase disabled:opacity-50 rounded-full md:rounded-none"
+                    >
+                        <Send size={20} />
+                        <span className="hidden md:inline">{loading ? "..." : "Send Signal"}</span>
+                    </button>
+                )}
+            </div>
         </div>
     );
 }
