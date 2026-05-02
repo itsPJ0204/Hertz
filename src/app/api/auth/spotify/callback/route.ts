@@ -37,19 +37,23 @@ export async function GET(request: Request) {
         spotifyApi.setAccessToken(access_token);
         spotifyApi.setRefreshToken(refresh_token);
 
-        // Verify Identity First
+        // Verify Identity First using raw fetch to bypass superagent bugs
         let debugUserEmail = 'unknown';
         let debugErrors: string[] = [];
         try {
-            const me = await spotifyApi.getMe();
-            debugUserEmail = me.body.email;
-            console.log(`[Spotify] Authenticated as: ${me.body.email} (${me.body.product})`);
-            console.log(`[Spotify] URI: ${me.body.uri}`);
-            debugErrors.push(`Me:${me.body.product}`); // e.g. Me:premium or Me:free
+            const res = await fetch('https://api.spotify.com/v1/me', {
+                headers: { 'Authorization': `Bearer ${access_token}` }
+            });
+            const text = await res.text();
+            if (!res.ok) {
+                debugErrors.push(`MeRawErr:${res.status}-${text}`);
+            } else {
+                const me = JSON.parse(text);
+                debugUserEmail = me.email;
+                debugErrors.push(`Me:${me.product}`);
+            }
         } catch (e: any) {
-            console.error('[Spotify] Failed to fetch /me endpoint:', e.message || e);
-            const msg = e.body ? JSON.stringify(e.body) : String(e.message || e.statusCode);
-            debugErrors.push(`MeErr:${msg}`);
+            debugErrors.push(`MeFetchCrash:${e.message}`);
         }
 
         // Fetch User Data with Granular Logging
