@@ -80,7 +80,7 @@ export async function GET(request: Request) {
         } catch (e: any) {
             console.error('[Spotify] Failed to fetch Top Artists. Error:', e.message || e);
             if (e.body) console.error('[Spotify] Top Artists Error Body:', JSON.stringify(e.body));
-            const msg = e.body?.error?.message || e.body?.error_description || e.message || e.statusCode;
+            const msg = e.body ? JSON.stringify(e.body) : String(e.message || e.statusCode);
             debugErrors.push(`TopArtErr:${msg}`);
         }
 
@@ -105,7 +105,7 @@ export async function GET(request: Request) {
         } catch (e: any) {
             console.error('[Spotify] Failed to fetch Top Tracks. Error:', e.message || e);
             if (e.body) console.error('[Spotify] Top Tracks Error Body:', JSON.stringify(e.body));
-            const msg = e.body?.error?.message || e.body?.error_description || e.message || e.statusCode;
+            const msg = e.body ? JSON.stringify(e.body) : String(e.message || e.statusCode);
             debugErrors.push(`TopTrkErr:${msg}`);
         }
 
@@ -163,7 +163,7 @@ export async function GET(request: Request) {
             } catch (e: any) {
                 console.error('[Spotify] Failed to fetch Saved Tracks. Error:', e.message || e);
                 if (e.body) console.error('[Spotify] Saved Tracks Error Body:', JSON.stringify(e.body));
-                const msg = e.body?.error?.message || e.body?.error_description || e.message || e.statusCode;
+                const msg = e.body ? JSON.stringify(e.body) : String(e.message || e.statusCode);
                 debugErrors.push(`LibErr:${msg}`);
             }
         }
@@ -201,7 +201,7 @@ export async function GET(request: Request) {
 
         if (!hasValidMusicData) {
             console.error('Spotify Linked but no music data found (Top or Library). Blocking link.');
-            const errorTrace = debugErrors.length > 0 ? `_E_${debugErrors.join('-')}` : '_NoErrorsJustEmpty';
+            const errorTrace = debugErrors.length > 0 ? `_E_${encodeURIComponent(debugErrors.join('-'))}` : '_NoErrorsJustEmpty';
             return NextResponse.redirect(new URL(`/profile?spotify=connected&data_error=INSUFFICIENT_SPOTIFY_DATA&debug=A${artistCount}_G${genreCount}_V${vectorSize}${errorTrace}`, request.url));
         }
 
