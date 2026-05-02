@@ -169,7 +169,13 @@ export function ChatWindow({ connectionId, receiverId, receiverName, receiverAva
                         <MoreVertical size={20} />
                     </button>
                     {isMenuOpen && (
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-white border-2 border-black shadow-[4px_4px_0px_0px_black] z-50">
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-white border-2 border-black shadow-[4px_4px_0px_0px_black] z-50 flex flex-col">
+                            <Link
+                                href={`/profile/${receiverId}`}
+                                className="w-full text-left px-4 py-3 text-black font-bold hover:bg-gray-100 uppercase text-xs tracking-wider border-b-2 border-black"
+                            >
+                                View Profile
+                            </Link>
                             <button
                                 onClick={async () => {
                                     if (confirm("Are you sure you want to remove this connection?")) {
