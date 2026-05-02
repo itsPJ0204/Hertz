@@ -75,7 +75,7 @@ export default async function FeedPage() {
                 </div>
             )}
 
-            <FeedClient matches={filteredMatches} />
+            <FeedClient matches={filteredMatches} currentUserId={user.id} />
         </div>
     );
 }

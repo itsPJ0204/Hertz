@@ -6,9 +6,10 @@ import { MatchedUser } from "@/lib/matching";
 
 interface FeedClientProps {
     matches: MatchedUser[];
+    currentUserId: string;
 }
 
-export function FeedClient({ matches }: FeedClientProps) {
+export function FeedClient({ matches, currentUserId }: FeedClientProps) {
     const [filter, setFilter] = useState<'all' | 'spotify'>('all');
 
     // Filter Logic
@@ -62,6 +63,7 @@ export function FeedClient({ matches }: FeedClientProps) {
                             {...m}
                             matchScore={filter === 'spotify' ? (m.spotifyScore || m.matchScore) : m.matchScore}
                             initialStatus={'none'} // Already filtered out connected/pending
+                            currentUserId={currentUserId}
                         />
                     ))}
                 </div>

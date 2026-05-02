@@ -60,9 +60,15 @@ export async function GET(request: Request) {
 
         // 1. Try Top Artists
         try {
-            const topArtists = await spotifyApi.getMyTopArtists({ limit: 50, time_range: 'medium_term' });
-            topArtistsItems = topArtists.body.items;
-            console.log(`[Spotify] Fetched ${topArtistsItems.length} Top Artists`);
+            const timeRanges: ('short_term' | 'medium_term' | 'long_term')[] = ['short_term', 'medium_term', 'long_term'];
+            for (const range of timeRanges) {
+                const topArtists = await spotifyApi.getMyTopArtists({ limit: 50, time_range: range });
+                if (topArtists.body.items.length > 0) {
+                    topArtistsItems = topArtists.body.items;
+                    console.log(`[Spotify] Fetched ${topArtistsItems.length} Top Artists (${range})`);
+                    break;
+                }
+            }
         } catch (e: any) {
             console.error('[Spotify] Failed to fetch Top Artists:', e.message || e);
             if (e.statusCode) console.error(`[Spotify] Top Artists Status: ${e.statusCode}`);
@@ -70,9 +76,15 @@ export async function GET(request: Request) {
 
         // 2. Try Top Tracks
         try {
-            const topTracks = await spotifyApi.getMyTopTracks({ limit: 50, time_range: 'medium_term' });
-            topTracksItems = topTracks.body.items;
-            console.log(`[Spotify] Fetched ${topTracksItems.length} Top Tracks`);
+            const timeRanges: ('short_term' | 'medium_term' | 'long_term')[] = ['short_term', 'medium_term', 'long_term'];
+            for (const range of timeRanges) {
+                const topTracks = await spotifyApi.getMyTopTracks({ limit: 50, time_range: range });
+                if (topTracks.body.items.length > 0) {
+                    topTracksItems = topTracks.body.items;
+                    console.log(`[Spotify] Fetched ${topTracksItems.length} Top Tracks (${range})`);
+                    break;
+                }
+            }
         } catch (e: any) {
             console.error('[Spotify] Failed to fetch Top Tracks:', e.message || e);
             if (e.statusCode) console.error(`[Spotify] Top Tracks Status: ${e.statusCode}`);
