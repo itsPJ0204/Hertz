@@ -228,7 +228,7 @@ export async function GET(request: Request) {
             return NextResponse.redirect(new URL('/profile?error=db_save_failed', request.url));
         }
 
-        return NextResponse.redirect(new URL('/profile?spotify=connected', request.url));
+        return NextResponse.redirect(new URL(`/profile?spotify=connected&debug_success=A${artistCount}_G${genreCount}_V${vectorSize}`, request.url));
 
     } catch (err: any) {
         console.error('Error in Spotify Callback:', err);
