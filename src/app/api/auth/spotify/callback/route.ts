@@ -66,57 +66,55 @@ export async function GET(request: Request) {
         let topArtistsItems: any[] = [];
         let topTracksItems: any[] = [];
 
-        // 1. Try Top Artists
-        try {
-            console.log('[Spotify] Starting Top Artists fetch...');
-            const timeRanges: ('short_term' | 'medium_term' | 'long_term')[] = ['short_term', 'medium_term', 'long_term'];
-            const allArtistsMap = new Map();
-            for (const range of timeRanges) {
-                console.log(`[Spotify] Fetching Top Artists for range: ${range}`);
-                const topArtists = await spotifyApi.getMyTopArtists({ limit: 50, time_range: range });
-                console.log(`[Spotify] Top Artists response (${range}):`, JSON.stringify({
-                    total: topArtists.body.total,
-                    limit: topArtists.body.limit,
-                    items_length: topArtists.body.items?.length,
-                }));
-                if (topArtists.body.items && topArtists.body.items.length > 0) {
-                    topArtists.body.items.forEach((a: any) => allArtistsMap.set(a.id, a));
-                }
-            }
-            topArtistsItems = Array.from(allArtistsMap.values());
-            console.log(`[Spotify] Success: Fetched ${topArtistsItems.length} unique Top Artists across all ranges`);
-        } catch (e: any) {
-            console.error('[Spotify] Failed to fetch Top Artists. Error:', e.message || e);
-            if (e.body) console.error('[Spotify] Top Artists Error Body:', JSON.stringify(e.body));
-            const msg = e.body ? JSON.stringify(e.body) : String(e.message || e.statusCode);
-            debugErrors.push(`TopArtErr:${msg}`);
-        }
+        // 1. Fetch all data sources in parallel
+        console.log('[Spotify] Starting parallel data fetch...');
+        const timeRanges: ('short_term' | 'medium_term' | 'long_term')[] = ['short_term', 'medium_term', 'long_term'];
+        
+        const fetchPromises = [
+            ...timeRanges.map(range => spotifyApi.getMyTopArtists({ limit: 50, time_range: range }).then(res => ({ type: 'top_artists', range, items: res.body.items }))),
+            ...timeRanges.map(range => spotifyApi.getMyTopTracks({ limit: 50, time_range: range }).then(res => ({ type: 'top_tracks', range, items: res.body.items }))),
+            spotifyApi.getMyRecentlyPlayedTracks({ limit: 50 }).then(res => ({ type: 'recent_tracks', items: res.body.items.map(i => i.track) })),
+            spotifyApi.getMySavedTracks({ limit: 50 }).then(res => ({ type: 'saved_tracks', items: res.body.items.map(i => i.track) })),
+            spotifyApi.getFollowedArtists({ limit: 50 }).then(res => ({ type: 'followed_artists', items: res.body.artists.items }))
+        ];
 
-        // 2. Try Top Tracks
-        try {
-            console.log('[Spotify] Starting Top Tracks fetch...');
-            const timeRanges: ('short_term' | 'medium_term' | 'long_term')[] = ['short_term', 'medium_term', 'long_term'];
-            const allTracksMap = new Map();
-            for (const range of timeRanges) {
-                console.log(`[Spotify] Fetching Top Tracks for range: ${range}`);
-                const topTracks = await spotifyApi.getMyTopTracks({ limit: 50, time_range: range });
-                console.log(`[Spotify] Top Tracks response (${range}):`, JSON.stringify({
-                    total: topTracks.body.total,
-                    limit: topTracks.body.limit,
-                    items_length: topTracks.body.items?.length,
-                }));
-                if (topTracks.body.items && topTracks.body.items.length > 0) {
-                    topTracks.body.items.forEach((t: any) => allTracksMap.set(t.id, t));
+        const results = await Promise.allSettled(fetchPromises);
+
+        const allArtistsMap = new Map();
+        const allTracksMap = new Map();
+        let recentlyPlayedItems: any[] = [];
+        let savedTracksItems: any[] = [];
+        let followedArtistsItems: any[] = [];
+
+        results.forEach((result) => {
+            if (result.status === 'fulfilled') {
+                const data = result.value;
+                if (!data.items) return;
+
+                if (data.type === 'top_artists') {
+                    data.items.forEach((a: any) => allArtistsMap.set(a.id, a));
+                } else if (data.type === 'top_tracks') {
+                    data.items.forEach((t: any) => allTracksMap.set(t.id, t));
+                } else if (data.type === 'recent_tracks') {
+                    recentlyPlayedItems = data.items;
+                    data.items.forEach((t: any) => allTracksMap.set(t.id, t));
+                } else if (data.type === 'saved_tracks') {
+                    savedTracksItems = data.items;
+                    data.items.forEach((t: any) => allTracksMap.set(t.id, t));
+                } else if (data.type === 'followed_artists') {
+                    followedArtistsItems = data.items;
+                    data.items.forEach((a: any) => allArtistsMap.set(a.id, a));
                 }
+            } else {
+                console.error('[Spotify] Parallel fetch failed for a source:', result.reason);
+                debugErrors.push(`FetchErr:${result.reason?.statusCode || 'unknown'}`);
             }
-            topTracksItems = Array.from(allTracksMap.values());
-            console.log(`[Spotify] Success: Fetched ${topTracksItems.length} unique Top Tracks across all ranges`);
-        } catch (e: any) {
-            console.error('[Spotify] Failed to fetch Top Tracks. Error:', e.message || e);
-            if (e.body) console.error('[Spotify] Top Tracks Error Body:', JSON.stringify(e.body));
-            const msg = e.body ? JSON.stringify(e.body) : String(e.message || e.statusCode);
-            debugErrors.push(`TopTrkErr:${msg}`);
-        }
+        });
+
+        topArtistsItems = Array.from(allArtistsMap.values());
+        topTracksItems = Array.from(allTracksMap.values());
+
+        console.log(`[Spotify] Success: Fetched ${topArtistsItems.length} total unique artists and ${topTracksItems.length} total unique tracks`);
 
         // 3. Extract all unique Artist IDs to fetch FULL unstripped artist objects
         // Spotify recently started stripping 'genres' from the getMyTopArtists endpoint.
@@ -170,40 +168,7 @@ export async function GET(request: Request) {
             debugErrors.push(`FirstArtistGenres:${JSON.stringify(finalArtists[0]?.genres || 'none')}`);
         }
 
-        // 5. Hard Fallback: Saved Tracks
-        if (processedProfile.top_artists.length === 0) {
-            console.log('[Spotify] Still no artists. Attempting Saved Tracks (Library)...');
-            try {
-                const savedTracks = await spotifyApi.getMySavedTracks({ limit: 50 });
-                console.log(`[Spotify] Saved Tracks response:`, JSON.stringify({
-                    total: savedTracks.body.total,
-                    limit: savedTracks.body.limit,
-                    items_length: savedTracks.body.items?.length,
-                }));
-                
-                if (savedTracks.body.items && savedTracks.body.items.length > 0) {
-                    const savedItems = savedTracks.body.items.map((i: any) => i.track);
-                    console.log(`[Spotify] Success: Fetched ${savedItems.length} Saved Tracks`);
-
-                    // Extract Artists
-                    const artistIds = new Set<string>();
-                    savedItems.forEach((t: any) => t?.artists?.forEach((a: any) => artistIds.add(a.id)));
-                    const artistIdArray = Array.from(artistIds).slice(0, 50);
-
-                    if (artistIdArray.length > 0) {
-                        const artistsResponse = await spotifyApi.getArtists(artistIdArray);
-                        const libArtists = artistsResponse.body.artists;
-                        console.log(`[Spotify] Fetched ${libArtists.length} artists from Library Tracks`);
-                        processedProfile = processSpotifyData(libArtists, savedItems);
-                    }
-                }
-            } catch (e: any) {
-                console.error('[Spotify] Failed to fetch Saved Tracks. Error:', e.message || e);
-                if (e.body) console.error('[Spotify] Saved Tracks Error Body:', JSON.stringify(e.body));
-                const msg = e.body ? JSON.stringify(e.body) : String(e.message || e.statusCode);
-                debugErrors.push(`LibErr:${msg}`);
-            }
-        }
+        // Removed Step 5 Hard Fallback since it's now handled in the parallel fetch
 
         // Store in Supabase
         const supabase = await createClient();
@@ -249,6 +214,9 @@ export async function GET(request: Request) {
                 top_artists: processedProfile.top_artists,
                 top_genres: processedProfile.top_genres,
                 genre_vector: processedProfile.genre_vector,
+                recently_played: recentlyPlayedItems.map(t => ({ id: t.id, name: t.name, artist: t.artists?.[0]?.name })),
+                saved_tracks: savedTracksItems.map(t => ({ id: t.id, name: t.name, artist: t.artists?.[0]?.name })),
+                followed_artists: followedArtistsItems.map(a => ({ id: a.id, name: a.name })),
                 is_spotify_linked: true, // Only true if we actually have data
                 last_updated: new Date().toISOString(),
             });

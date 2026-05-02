@@ -15,7 +15,9 @@ export async function GET(request: Request) {
         'user-read-private',
         'user-read-email',
         'user-top-read',
-        'user-library-read', // Fallback for free accounts
+        'user-library-read',
+        'user-read-recently-played',
+        'user-follow-read',
     ];
 
     const state = 'some-state-of-my-choice'; // TODO: Generate random string for security
