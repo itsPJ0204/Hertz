@@ -70,6 +70,7 @@ export async function GET(request: Request) {
         try {
             console.log('[Spotify] Starting Top Artists fetch...');
             const timeRanges: ('short_term' | 'medium_term' | 'long_term')[] = ['short_term', 'medium_term', 'long_term'];
+            const allArtistsMap = new Map();
             for (const range of timeRanges) {
                 console.log(`[Spotify] Fetching Top Artists for range: ${range}`);
                 const topArtists = await spotifyApi.getMyTopArtists({ limit: 50, time_range: range });
@@ -79,11 +80,11 @@ export async function GET(request: Request) {
                     items_length: topArtists.body.items?.length,
                 }));
                 if (topArtists.body.items && topArtists.body.items.length > 0) {
-                    topArtistsItems = topArtists.body.items;
-                    console.log(`[Spotify] Success: Fetched ${topArtistsItems.length} Top Artists (${range})`);
-                    break;
+                    topArtists.body.items.forEach((a: any) => allArtistsMap.set(a.id, a));
                 }
             }
+            topArtistsItems = Array.from(allArtistsMap.values());
+            console.log(`[Spotify] Success: Fetched ${topArtistsItems.length} unique Top Artists across all ranges`);
         } catch (e: any) {
             console.error('[Spotify] Failed to fetch Top Artists. Error:', e.message || e);
             if (e.body) console.error('[Spotify] Top Artists Error Body:', JSON.stringify(e.body));
@@ -95,6 +96,7 @@ export async function GET(request: Request) {
         try {
             console.log('[Spotify] Starting Top Tracks fetch...');
             const timeRanges: ('short_term' | 'medium_term' | 'long_term')[] = ['short_term', 'medium_term', 'long_term'];
+            const allTracksMap = new Map();
             for (const range of timeRanges) {
                 console.log(`[Spotify] Fetching Top Tracks for range: ${range}`);
                 const topTracks = await spotifyApi.getMyTopTracks({ limit: 50, time_range: range });
@@ -104,11 +106,11 @@ export async function GET(request: Request) {
                     items_length: topTracks.body.items?.length,
                 }));
                 if (topTracks.body.items && topTracks.body.items.length > 0) {
-                    topTracksItems = topTracks.body.items;
-                    console.log(`[Spotify] Success: Fetched ${topTracksItems.length} Top Tracks (${range})`);
-                    break;
+                    topTracks.body.items.forEach((t: any) => allTracksMap.set(t.id, t));
                 }
             }
+            topTracksItems = Array.from(allTracksMap.values());
+            console.log(`[Spotify] Success: Fetched ${topTracksItems.length} unique Top Tracks across all ranges`);
         } catch (e: any) {
             console.error('[Spotify] Failed to fetch Top Tracks. Error:', e.message || e);
             if (e.body) console.error('[Spotify] Top Tracks Error Body:', JSON.stringify(e.body));
