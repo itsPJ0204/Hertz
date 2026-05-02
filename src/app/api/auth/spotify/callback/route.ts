@@ -131,13 +131,22 @@ export async function GET(request: Request) {
         if (artistIdArray.length > 0) {
             console.log(`[Spotify] Fetching unstripped data for ${artistIdArray.length} unique artists...`);
             try {
-                const artistsResponse = await spotifyApi.getArtists(artistIdArray);
-                finalArtists = artistsResponse.body.artists;
-                console.log(`[Spotify] Success: Fetched unstripped artists`);
+                const res = await fetch(`https://api.spotify.com/v1/artists?ids=${artistIdArray.join(',')}`, {
+                    headers: { 'Authorization': `Bearer ${access_token}` }
+                });
+                const text = await res.text();
+                if (!res.ok) {
+                    debugErrors.push(`GetArtistsRawErr:${res.status}-${text}`);
+                    finalArtists = topArtistsItems; 
+                } else {
+                    const data = JSON.parse(text);
+                    finalArtists = data.artists;
+                    console.log(`[Spotify] Success: Fetched unstripped artists`);
+                }
             } catch (e: any) {
                 console.error('[Spotify] Failed to fetch unstripped artists:', e);
-                debugErrors.push(`GetArtistsErr:${e.statusCode || e.message}`);
-                finalArtists = topArtistsItems; // Fallback to stripped ones if it fails
+                debugErrors.push(`GetArtistsFetchCrash:${e.message}`);
+                finalArtists = topArtistsItems;
             }
         }
 
