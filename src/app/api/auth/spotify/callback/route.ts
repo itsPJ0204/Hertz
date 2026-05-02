@@ -57,6 +57,7 @@ export async function GET(request: Request) {
 
         let topArtistsItems: any[] = [];
         let topTracksItems: any[] = [];
+        let debugErrors: string[] = [];
 
         // 1. Try Top Artists
         try {
@@ -79,7 +80,7 @@ export async function GET(request: Request) {
         } catch (e: any) {
             console.error('[Spotify] Failed to fetch Top Artists. Error:', e.message || e);
             if (e.body) console.error('[Spotify] Top Artists Error Body:', JSON.stringify(e.body));
-            if (e.statusCode) console.error(`[Spotify] Top Artists Status: ${e.statusCode}`);
+            debugErrors.push(`TopArtErr:${e.statusCode || e.message}`);
         }
 
         // 2. Try Top Tracks
@@ -103,7 +104,7 @@ export async function GET(request: Request) {
         } catch (e: any) {
             console.error('[Spotify] Failed to fetch Top Tracks. Error:', e.message || e);
             if (e.body) console.error('[Spotify] Top Tracks Error Body:', JSON.stringify(e.body));
-            if (e.statusCode) console.error(`[Spotify] Top Tracks Status: ${e.statusCode}`);
+            debugErrors.push(`TopTrkErr:${e.statusCode || e.message}`);
         }
 
         // 3. Process what we have so far
@@ -160,7 +161,7 @@ export async function GET(request: Request) {
             } catch (e: any) {
                 console.error('[Spotify] Failed to fetch Saved Tracks. Error:', e.message || e);
                 if (e.body) console.error('[Spotify] Saved Tracks Error Body:', JSON.stringify(e.body));
-                if (e.statusCode) console.error(`[Spotify] Saved Tracks Status: ${e.statusCode}`);
+                debugErrors.push(`LibErr:${e.statusCode || e.message}`);
             }
         }
 
@@ -197,7 +198,8 @@ export async function GET(request: Request) {
 
         if (!hasValidMusicData) {
             console.error('Spotify Linked but no music data found (Top or Library). Blocking link.');
-            return NextResponse.redirect(new URL(`/profile?spotify=connected&data_error=INSUFFICIENT_SPOTIFY_DATA&debug=A${artistCount}_G${genreCount}_V${vectorSize}`, request.url));
+            const errorTrace = debugErrors.length > 0 ? `_E_${debugErrors.join('-')}` : '_NoErrorsJustEmpty';
+            return NextResponse.redirect(new URL(`/profile?spotify=connected&data_error=INSUFFICIENT_SPOTIFY_DATA&debug=A${artistCount}_G${genreCount}_V${vectorSize}${errorTrace}`, request.url));
         }
 
         const { error: dbError } = await supabase
