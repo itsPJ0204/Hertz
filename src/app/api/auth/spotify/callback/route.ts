@@ -125,7 +125,7 @@ export async function GET(request: Request) {
         if (processedProfile.top_artists.length === 0 && topTracksItems.length > 0) {
             console.log('[Spotify] top_artists is empty. Attempting backfill from Top Tracks...');
             const artistIds = new Set<string>();
-            topTracksItems.forEach((t: any) => t.artists.forEach((a: any) => artistIds.add(a.id)));
+            topTracksItems.forEach((t: any) => t?.artists?.forEach((a: any) => artistIds.add(a.id)));
             const artistIdArray = Array.from(artistIds).slice(0, 50);
 
             if (artistIdArray.length > 0) {
@@ -157,7 +157,7 @@ export async function GET(request: Request) {
 
                     // Extract Artists
                     const artistIds = new Set<string>();
-                    savedItems.forEach((t: any) => t.artists.forEach((a: any) => artistIds.add(a.id)));
+                    savedItems.forEach((t: any) => t?.artists?.forEach((a: any) => artistIds.add(a.id)));
                     const artistIdArray = Array.from(artistIds).slice(0, 50);
 
                     if (artistIdArray.length > 0) {

@@ -28,11 +28,11 @@ export function processSpotifyData(
         artistsMap.set(artist.id, {
             name: artist.name,
             id: artist.id,
-            genres: artist.genres,
-            image: artist.images[0]?.url || '',
+            genres: artist.genres || [],
+            image: artist.images?.[0]?.url || '',
         });
 
-        artist.genres.forEach((genre) => {
+        artist.genres?.forEach((genre) => {
             genreCounts[genre] = (genreCounts[genre] || 0) + 1;
         });
     });
