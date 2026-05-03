@@ -3,6 +3,9 @@ import { SectionRow } from "@/components/SectionRow";
 import { Navigation } from "@/components/Navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getRecommendations } from "@/lib/recommendations";
+import { SpeedDialSection } from "@/components/home/SpeedDialSection";
+import { QuickPicksSection } from "@/components/home/QuickPicksSection";
+import { LandscapeSection } from "@/components/home/LandscapeSection";
 
 import { SearchComponent } from "@/components/SearchComponent";
 import { NoiseReductionToggle } from "@/components/NoiseReductionToggle";
@@ -62,7 +65,7 @@ export default async function Home() {
         seen.add(s.id);
         return true;
       })
-      .slice(0, 15);
+      .slice(0, 24);
   }
 
   // 3. Fetch Liked Songs (Your Collection)
@@ -121,7 +124,7 @@ export default async function Home() {
     <div className="min-h-screen pb-32 bg-[#E8E4D9]">
       {/* Header removed: Replaced by Sidebar */}
 
-      <main className="max-w-7xl mx-auto p-8 overflow-hidden">
+      <main className="max-w-7xl mx-auto p-4 md:p-8 overflow-hidden">
         <div className="mb-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-2">
             <div>
@@ -140,13 +143,17 @@ export default async function Home() {
         </div>
 
         {/* Sections */}
-        {likedTracksRaw.length > 0 && (
-          <SectionRow title="Your Collection" tracks={likedTracksRaw.map(mapToTrack)} />
+        {historyTracks.length > 0 && (
+          <SpeedDialSection title="Recent Frequencies" tracks={historyTracks.map(mapToTrack)} />
         )}
 
-        <SectionRow title="Fresh Drops" tracks={(freshSongs || []).map(mapToTrack)} />
+        {likedTracksRaw.length > 0 && (
+          <QuickPicksSection title="Quick Picks" tracks={likedTracksRaw.map(mapToTrack)} />
+        )}
 
-        <SectionRow title="Made For You" tracks={recTracks.map(mapToTrack)} />
+        <LandscapeSection title="Made For You" tracks={recTracks.map(mapToTrack)} />
+
+        <SectionRow title="Fresh Drops" tracks={(freshSongs || []).map(mapToTrack)} />
 
         {/* Dynamic Vibe Playlists Section */}
         {genrePlaylists.length > 0 && (
@@ -177,10 +184,6 @@ export default async function Home() {
               ))}
             </div>
           </div>
-        )}
-
-        {historyTracks.length > 0 && (
-          <SectionRow title="History" tracks={historyTracks.map(mapToTrack)} />
         )}
 
         {/* Fallback */}
