@@ -5,6 +5,7 @@ import { JamendoTrack } from '@/lib/jamendo';
 import { createClient } from '@/lib/supabase/client';
 import { getRecommendations } from '@/lib/recommendations';
 import { AudioDuckingEngine } from './AudioDuckingEngine';
+import { getDominantHue } from '@/lib/colorExtractor';
 
 interface PlayerContextType {
     currentTrack: JamendoTrack | null;
@@ -34,6 +35,7 @@ interface PlayerContextType {
     gainNode: GainNode | null;
     mediaSourceNode: MediaElementAudioSourceNode | null;
     musicAudioContext: AudioContext | null;
+    dominantHue: number;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -48,6 +50,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const [autoplay, setAutoplay] = useState(true);
     const [isMuted, setIsMuted] = useState(false);
     const [isNoiseReductionEnabled, setIsNoiseReductionEnabled] = useState(false);
+    const [dominantHue, setDominantHue] = useState<number>(200);
     const autoplayRef = useRef(true); // Ref for access in event listeners
 
     // Track how many upcoming tracks were explicitly added by the user (playNext/addToQueue)
@@ -163,6 +166,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             audio.removeEventListener('error', handleError);
         };
     }, [currentTrack]);
+
+    // Extract Dominant Hue from cover art
+    useEffect(() => {
+        if (currentTrack?.image) {
+            getDominantHue(currentTrack.image).then(hue => {
+                setDominantHue(hue);
+            });
+        }
+    }, [currentTrack?.image]);
 
     // Precise 30s tracking
     useEffect(() => {
@@ -513,7 +525,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }, [currentTrack]);
 
     return (
-        <PlayerContext.Provider value={{ currentTrack, isPlaying, play, pause, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, playNext, addToQueue, removeFromQueue, reorderQueue, autoplay, toggleAutoplay, isMuted, toggleMute, audioElement, isNoiseReductionEnabled, toggleNoiseReduction, gainNode, mediaSourceNode, musicAudioContext }}>
+        <PlayerContext.Provider value={{ currentTrack, isPlaying, play, pause, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, playNext, addToQueue, removeFromQueue, reorderQueue, autoplay, toggleAutoplay, isMuted, toggleMute, audioElement, isNoiseReductionEnabled, toggleNoiseReduction, gainNode, mediaSourceNode, musicAudioContext, dominantHue }}>
             {children}
             <AudioDuckingEngine />
         </PlayerContext.Provider>

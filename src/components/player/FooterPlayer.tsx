@@ -110,8 +110,8 @@ export function FooterPlayer() {
                                     <div className="w-full h-full bg-clay-primary opacity-20" />
                                 )}
                             </div>
-                            <h2 className="text-3xl md:text-4xl font-black uppercase italic leading-none mb-2 mt-4">{currentTrack.name}</h2>
-                            <p className="text-xl font-bold opacity-60">{currentTrack.artist_name}</p>
+                            <h2 className="text-3xl md:text-4xl font-black uppercase italic leading-none mb-2 mt-4" data-text={currentTrack.name}>{currentTrack.name}</h2>
+                            <p className="text-xl font-bold opacity-60" data-text={currentTrack.artist_name}>{currentTrack.artist_name}</p>
                         </div>
 
                         {/* Right: Controls & Queue */}

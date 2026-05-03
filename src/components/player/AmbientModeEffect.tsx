@@ -5,12 +5,12 @@ import { usePlayer } from './PlayerContext';
 import { initAudioAnalyzer, getAnalyser } from '@/lib/audioAnalyzer';
 
 export function AmbientModeEffect() {
-    const { audioElement, isPlaying, mediaSourceNode, musicAudioContext } = usePlayer();
+    const { audioElement, isPlaying, mediaSourceNode, musicAudioContext, dominantHue } = usePlayer();
     const requestRef = useRef<number | null>(null);
 
     // Smooth variables
     const smoothBass = useRef(0);
-    const hueRef = useRef(200);
+    const hueRef = useRef(dominantHue || 200);
 
     useEffect(() => {
         if (!audioElement || !mediaSourceNode || !musicAudioContext) return;
@@ -43,8 +43,8 @@ export function AmbientModeEffect() {
                 // Smooth it slightly for the UI (keep a base smooth for glow, but use sharper values for beat)
                 smoothBass.current = smoothBass.current * 0.8 + normBass * 0.2;
 
-                // Slowly cycle hue over time for variety
-                hueRef.current = (hueRef.current + 0.1) % 360;
+                // Smoothly transition hue to the dominant hue
+                hueRef.current += (dominantHue - hueRef.current) * 0.1;
 
                 // Create a sharper "heartbeat" peak
                 const beatPeak = normBass > 0.6 ? normBass : smoothBass.current;
@@ -68,7 +68,7 @@ export function AmbientModeEffect() {
             document.documentElement.style.setProperty('--ambient-intensity', '0');
             document.documentElement.style.setProperty('--ambient-spread', '0');
         };
-    }, [audioElement, isPlaying, mediaSourceNode, musicAudioContext]);
+    }, [audioElement, isPlaying, mediaSourceNode, musicAudioContext, dominantHue]);
 
     // We render a small hidden div just to have a valid React node, 
     // though returning null is usually fine, sometimes React 18 strict mode 

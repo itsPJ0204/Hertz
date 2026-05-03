@@ -164,7 +164,7 @@ void main() {
 
 
 export function TranceModeEffect() {
-    const { audioElement, isPlaying, mediaSourceNode, musicAudioContext } = usePlayer();
+    const { audioElement, isPlaying, mediaSourceNode, musicAudioContext, dominantHue } = usePlayer();
     const requestRef = useRef<number | null>(null);
     const bgCanvasRef = useRef<HTMLCanvasElement>(null);
     const fgCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -172,7 +172,8 @@ export function TranceModeEffect() {
 
     // Smooth variables
     const smoothBass = useRef(0);
-    const hueRef = useRef(Math.random());
+    const targetHue = (dominantHue || 200) / 360;
+    const hueRef = useRef(targetHue);
 
     // UI Floating Coordinates — reduced from 10 to 5 elements
     const elementsRef = useRef(Array.from({ length: 5 }, () => ({
@@ -201,8 +202,11 @@ export function TranceModeEffect() {
         const fgCanvas = fgCanvasRef.current;
         if (!bgCanvas || !fgCanvas) return;
 
-        // Render at lower effective resolution for performance
-        const pixelRatio = Math.min(window.devicePixelRatio, 1.0);
+        // Render at lower effective resolution for massive performance boost
+        // Limit max pixelRatio to 0.5 (or 0.4 on mobile) so we aren't rendering full device resolution
+        const isMobile = window.innerWidth < 768;
+        const maxPixelRatio = isMobile ? 0.35 : 0.5;
+        const pixelRatio = Math.min(window.devicePixelRatio, maxPixelRatio);
 
         let bgRenderer: THREE.WebGLRenderer;
         let fgRenderer: THREE.WebGLRenderer;
@@ -315,7 +319,9 @@ export function TranceModeEffect() {
 
                 const isBeat = normBass > 0.75;
 
-                hueRef.current = (hueRef.current + 0.001 + normBass * 0.01) % 1.0;
+                // Smoothly pull hue towards the current dominant color (0-1 range)
+                const currentTargetHue = (dominantHue || 200) / 360;
+                hueRef.current += (currentTargetHue - hueRef.current) * 0.02;
 
                 // --- Uniform Updates ---
                 uniforms.uBass.value += (normBass - uniforms.uBass.value) * 0.15;
@@ -408,9 +414,8 @@ export function TranceModeEffect() {
                 rootStyle.setProperty(`--trance-r-${idx}`, '0deg');
             });
         };
-    // IMPORTANT: isPlaying is intentionally excluded — the animate loop reads it via closure
-    // but we do NOT want to destroy/recreate WebGL contexts on play/pause toggle
-    }, [audioElement, mediaSourceNode, musicAudioContext]);
+    // We include dominantHue so the closure captures it correctly without recreating WebGL contexts
+    }, [audioElement, mediaSourceNode, musicAudioContext, dominantHue]);
 
     return (
         <>
