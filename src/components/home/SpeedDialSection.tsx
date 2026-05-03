@@ -62,11 +62,11 @@ export function SpeedDialSection({ title, tracks }: SpeedDialSectionProps) {
 
     return (
         <div className="mb-12">
-            <h2 className="text-2xl font-black mb-4 uppercase tracking-tight flex items-center gap-2">
+            <h2 className="text-2xl font-black mb-4 uppercase tracking-tight flex items-center gap-2 px-4 md:px-0">
                 {title}
             </h2>
 
-            <div className="overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+            <div className="overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide px-4 md:px-0">
                 {/* 3 Rows Grid on mobile, Standard wrapping grid on desktop */}
                 <div className="grid grid-rows-3 grid-flow-col md:grid-rows-none md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 md:grid-flow-row gap-3 md:gap-4 w-max md:w-full pr-8 md:pr-0">
                     {tracks.map((track) => (

@@ -60,6 +60,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     // Sync ref
     useEffect(() => { autoplayRef.current = autoplay; }, [autoplay]);
 
+    const nextRef = useRef<() => void>(() => {});
+
     const toggleAutoplay = () => setAutoplay(prev => !prev);
     const toggleNoiseReduction = () => setIsNoiseReductionEnabled(prev => !prev);
 
@@ -134,7 +136,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             setIsPlaying(false);
             reportListening(currentTrack, listeningTimeRef.current, true);
             if (autoplayRef.current) {
-                next(); // Auto-play next if enabled
+                nextRef.current(); // Auto-play next using the latest queue state
             }
         };
 
@@ -426,6 +428,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             setIsPlaying(false);
         }
     };
+
+    // Keep nextRef updated
+    useEffect(() => {
+        nextRef.current = next;
+    }, [next]);
 
     const prev = () => {
         if (currentTime > 3) {

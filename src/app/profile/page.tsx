@@ -116,7 +116,7 @@ export default function ProfilePage() {
         if (!tempName.trim() || !profile) return;
         try {
             const { error } = await (supabase.from('profiles') as any)
-                .upsert({ id: user.id, full_name: tempName, updated_at: new Date().toISOString() })
+                .upsert({ id: user.id, full_name: tempName })
                 .select()
                 .single();
 
@@ -153,7 +153,7 @@ export default function ProfilePage() {
             const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
 
             const { error: updateError } = await (supabase.from('profiles') as any)
-                .upsert({ id: user.id, avatar_url: publicUrl, updated_at: new Date().toISOString() })
+                .upsert({ id: user.id, avatar_url: publicUrl })
                 .select()
                 .single();
 

@@ -111,12 +111,12 @@ export function SectionRow({ title, tracks }: SectionRowProps) {
 
     return (
         <div className="mb-12">
-            <h2 className="text-3xl font-black mb-6 uppercase tracking-tight flex items-center gap-2">
+            <h2 className="text-3xl font-black mb-6 uppercase tracking-tight flex items-center gap-2 px-4 md:px-0">
                 <span className="w-4 h-4 bg-clay-primary inline-block"></span>
                 {title}
             </h2>
 
-            <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scrollbar-hide">
+            <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scrollbar-hide px-4 md:px-0">
                 {tracks.map((track) => (
                     <TrackCard key={track.id} track={track} />
                 ))}

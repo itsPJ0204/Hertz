@@ -72,11 +72,11 @@ export function LandscapeSection({ title, tracks }: LandscapeSectionProps) {
 
     return (
         <div className="mb-12">
-            <h2 className="text-2xl font-black mb-6 uppercase tracking-tight flex items-center gap-2">
+            <h2 className="text-2xl font-black mb-6 uppercase tracking-tight flex items-center gap-2 px-4 md:px-0">
                 {title}
             </h2>
 
-            <div className="flex overflow-x-auto gap-4 md:gap-6 pb-6 snap-x snap-mandatory scrollbar-hide pr-8">
+            <div className="flex overflow-x-auto gap-4 md:gap-6 pb-6 snap-x snap-mandatory scrollbar-hide pr-8 px-4 md:px-0">
                 {tracks.map((track) => (
                     <LandscapeCard key={track.id} track={track} />
                 ))}

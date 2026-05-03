@@ -70,7 +70,7 @@ export function QuickPicksSection({ title, tracks }: QuickPicksSectionProps) {
 
     return (
         <div className="mb-12">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 px-4 md:px-0">
                 <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-2">
                     {title}
                 </h2>
@@ -82,7 +82,7 @@ export function QuickPicksSection({ title, tracks }: QuickPicksSectionProps) {
                 </button>
             </div>
 
-            <div className="overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+            <div className="overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide px-4 md:px-0">
                 {/* 4 Rows Grid, auto flow column */}
                 <div className="grid grid-rows-4 grid-flow-col gap-x-6 gap-y-1 w-max pr-8">
                     {tracks.map((track) => (
