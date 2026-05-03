@@ -68,7 +68,7 @@ export function FooterPlayer() {
                 className={clsx(
                     "fixed inset-0 z-50 flex flex-col overflow-y-auto transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
                     isExpanded ? "translate-y-0" : "translate-y-full",
-                    isTranceMode ? "trance-fullscreen bg-black flex overflow-hidden" : isAmbientMode ? "ambient-fullscreen bg-black flex" : "bg-clay-bg flex"
+                    isTranceMode ? "trance-fullscreen bg-black flex overflow-hidden" : isAmbientMode ? "ambient-fullscreen bg-black flex overflow-hidden" : "bg-clay-bg flex"
                 )}
             >
                 {isAmbientMode && !isTranceMode && <AmbientModeEffect />}
@@ -101,13 +101,13 @@ export function FooterPlayer() {
                         {/* Left: Cover & Info */}
                         <div className={clsx("flex flex-col justify-center items-center text-center", (isAmbientMode || isTranceMode) ? "w-full md:w-1/2" : "flex-1", isTranceMode && "trance-float-1")}>
                             <div className={clsx(
-                                "w-64 h-64 md:w-96 md:h-96 border-4 relative overflow-hidden transition-all duration-300",
-                                isTranceMode ? "trance-glow rounded-3xl" : isAmbientMode ? "ambient-glow" : "bg-white border-black shadow-[8px_8px_0px_0px_#000000]"
+                                "w-64 h-64 md:w-96 md:h-96 relative transition-all duration-300",
+                                isTranceMode ? "trance-glow rounded-3xl" : isAmbientMode ? "ambient-glow rounded-xl" : "bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000000]"
                             )}>
                                 {currentTrack.image ? (
-                                    <img src={currentTrack.image} className="w-full h-full object-cover" />
+                                    <img src={currentTrack.image} className="w-full h-full object-cover rounded-[inherit]" />
                                 ) : (
-                                    <div className="w-full h-full bg-clay-primary opacity-20" />
+                                    <div className="w-full h-full bg-clay-primary opacity-20 rounded-[inherit]" />
                                 )}
                             </div>
                             <h2 className="text-3xl md:text-4xl font-black uppercase italic leading-none mb-2 mt-4" data-text={currentTrack.name}>{currentTrack.name}</h2>
