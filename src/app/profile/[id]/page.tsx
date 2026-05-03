@@ -39,7 +39,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
             .or(`user_a.eq.${id},user_b.eq.${id}`)
             .eq('status', 'connected'),
         supabase.from('user_music_profiles').select('*').eq('user_id', id).single(),
-        supabase.from('songs').select('*').eq('user_id', id).order('created_at', { ascending: false })
+        supabase.from('songs').select('*').eq('uploader_id', id).order('created_at', { ascending: false })
     ]);
 
     const stats = {
