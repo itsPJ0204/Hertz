@@ -39,10 +39,11 @@ export async function createPlaylist(name: string) {
         .single();
 
     if (error) {
-        console.error("Error creating playlist:", error);
-        return { success: false, error: error.message };
+        console.error("DEBUG: Error creating playlist:", error, { name, user_id: user.id });
+        return { success: false, error: error.message + " | CODE: " + error.code };
     }
 
+    revalidatePath("/my-playlists");
     revalidatePath("/", "layout");
     return { success: true, playlist: data };
 }

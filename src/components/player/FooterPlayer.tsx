@@ -2,11 +2,12 @@
 
 import { usePlayer } from "./PlayerContext";
 import { ReportModal } from "../report/ReportModal";
-import { Play, Pause, SkipForward, SkipBack, Volume2, ChevronUp, ChevronDown, ListMusic, Repeat, Flag, Waves, Sparkles, GripVertical, Trash2 } from "lucide-react";
+import { Play, Pause, SkipForward, SkipBack, Volume2, ChevronUp, ChevronDown, ListMusic, Repeat, Flag, Waves, Sparkles, GripVertical, Trash2, Heart } from "lucide-react";
 import { AmbientModeEffect } from './AmbientModeEffect';
 import { TranceModeEffect } from './TranceModeEffect';
+import { toggleLike } from '@/actions/toggleLike';
 import clsx from "clsx";
-import { useState, useRef } from "react";
+import { useState, useRef, useTransition, useEffect } from "react";
 
 export function FooterPlayer() {
     const { currentTrack, isPlaying, toggle, currentTime, duration, seek, next, prev, queue, currentIndex, playQueue, autoplay, toggleAutoplay, isMuted, toggleMute, removeFromQueue, reorderQueue } = usePlayer();
@@ -14,6 +15,31 @@ export function FooterPlayer() {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [isAmbientMode, setIsAmbientMode] = useState(false);
+
+    // Like state
+    const [isLiked, setIsLiked] = useState(false);
+    const [isLikePending, startLikeTransition] = useTransition();
+
+    useEffect(() => {
+        if (currentTrack) {
+            setIsLiked(!!(currentTrack as any).isLiked);
+        }
+    }, [currentTrack]);
+
+    const handleLike = async () => {
+        if (!currentTrack) return;
+        const newState = !isLiked;
+        setIsLiked(newState);
+        
+        startLikeTransition(async () => {
+            try {
+                await toggleLike(currentTrack.id);
+            } catch (e) {
+                console.error("Failed to toggle like:", e);
+                setIsLiked(!newState); // revert
+            }
+        });
+    };
 
     // Drag and Drop state
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -135,7 +161,19 @@ export function FooterPlayer() {
                             </div>
 
                             {/* Main Controls */}
-                            <div className={clsx("flex items-center justify-center gap-8", isTranceMode && "trance-float-3")}>
+                            <div className={clsx("flex items-center justify-center gap-6", isTranceMode && "trance-float-3")}>
+                                {/* Like Button */}
+                                <button 
+                                    onClick={handleLike} 
+                                    className={clsx(
+                                        "p-3 hover:scale-110 transition-all rounded-full",
+                                        isLiked ? "text-red-500" : "text-gray-400 hover:text-white"
+                                    )}
+                                    title="Like this song"
+                                >
+                                    <Heart size={24} fill={isLiked ? "currentColor" : "none"} />
+                                </button>
+                                
                                 <button onClick={prev} className="p-4 hover:scale-110 transition-transform">
                                     <SkipBack size={32} fill="currentColor" />
                                 </button>

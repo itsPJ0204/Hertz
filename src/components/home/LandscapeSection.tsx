@@ -76,7 +76,7 @@ function LandscapeCard({ track }: { track: Track }) {
                     </p>
                 </div>
                 {/* Menu Button - Hidden on mobile unless hovered on desktop */}
-                <div className="flex-shrink-0 -mt-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity hidden md:block">
+                <div className="flex-shrink-0 -mt-1 opacity-0 md:group-hover:opacity-100 transition-opacity pointer-events-none md:pointer-events-auto">
                     <SongActionMenu track={track as any} />
                 </div>
             </div>

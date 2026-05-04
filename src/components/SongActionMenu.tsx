@@ -89,7 +89,7 @@ export function SongActionMenu({ track }: { track: JamendoTrack }) {
                 id={`menu-btn-${track.id}`}
                 ref={buttonRef}
                 onClick={(e) => { e.preventDefault(); setIsOpen(!isOpen); }}
-                className="p-2 hover:bg-black/10 rounded-full transition-colors text-gray-500 hover:text-black"
+                className="p-1.5 bg-white/60 backdrop-blur-md shadow-sm border border-black/10 hover:bg-white rounded-full transition-colors text-black"
                 title="More options"
             >
                 <MoreVertical size={20} />
@@ -101,6 +101,10 @@ export function SongActionMenu({ track }: { track: JamendoTrack }) {
                     style={menuStyle}
                     className="w-48 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col py-1 animate-in fade-in zoom-in duration-150"
                     onClick={e => e.stopPropagation()}
+                    onMouseDown={e => e.stopPropagation()}
+                    onMouseUp={e => e.stopPropagation()}
+                    onTouchStart={e => e.stopPropagation()}
+                    onTouchEnd={e => e.stopPropagation()}
                 >
                     <button
                         onClick={() => { playNext(track); setIsOpen(false); }}

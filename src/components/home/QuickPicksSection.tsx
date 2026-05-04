@@ -58,7 +58,7 @@ function QuickPickListItem({ track }: { track: Track }) {
                 </div>
             </div>
             
-            <div className="flex-shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity ml-2 hidden md:block" onClick={e => e.stopPropagation()}>
+            <div className="flex-shrink-0 opacity-0 md:group-hover:opacity-100 transition-opacity ml-2 pointer-events-none md:pointer-events-auto" onClick={e => e.stopPropagation()}>
                 <SongActionMenu track={track as any} />
             </div>
         </div>

@@ -100,7 +100,7 @@ function TrackCard({ track }: { track: Track }) {
                     {/* Mini Actions */}
                     <div className="flex gap-2 items-center z-20">
                         {/* Hidden on mobile, triggered by long press */}
-                        <div onClick={e => e.stopPropagation()} className="opacity-50 hover:opacity-100 transition-opacity hidden md:block">
+                        <div onClick={e => e.stopPropagation()} className="opacity-0 md:opacity-50 hover:opacity-100 transition-opacity pointer-events-none md:pointer-events-auto">
                             <SongActionMenu track={track as any} />
                         </div>
                         <button

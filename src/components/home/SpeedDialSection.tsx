@@ -53,7 +53,7 @@ function SpeedDialCard({ track }: { track: Track }) {
             </div>
 
             {/* Menu Button - Hidden on mobile unless hovered on desktop */}
-            <div className="absolute top-1 right-1 z-20 md:opacity-0 md:group-hover:opacity-100 transition-opacity hidden md:block">
+            <div className="absolute top-1 right-1 z-20 opacity-0 md:group-hover:opacity-100 transition-opacity pointer-events-none md:pointer-events-auto">
                 <SongActionMenu track={track as any} />
             </div>
 
