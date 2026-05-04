@@ -8,7 +8,7 @@ import { usePlayer } from "./player/PlayerContext";
 import { getUserPlaylists, addSongToPlaylist } from "@/actions/playlists";
 import clsx from "clsx";
 
-export function SongActionMenu({ track }: { track: JamendoTrack }) {
+export function SongActionMenu({ track, menuId }: { track: JamendoTrack; menuId?: string }) {
     const [isOpen, setIsOpen] = useState(false);
     const [playlists, setPlaylists] = useState<any[]>([]);
     const [isFetchingPlaylists, setIsFetchingPlaylists] = useState(false);
@@ -86,7 +86,7 @@ export function SongActionMenu({ track }: { track: JamendoTrack }) {
     return (
         <div onClick={e => e.stopPropagation()}>
             <button
-                id={`menu-btn-${track.id}`}
+                id={menuId || `menu-btn-${track.id}`}
                 ref={buttonRef}
                 onClick={(e) => { e.preventDefault(); setIsOpen(!isOpen); }}
                 className="p-1.5 bg-white/60 backdrop-blur-md shadow-sm border border-black/10 hover:bg-white rounded-full transition-colors text-black"

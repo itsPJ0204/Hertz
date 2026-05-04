@@ -35,7 +35,7 @@ function LandscapeCard({ track }: { track: Track }) {
     };
 
     const longPressHandlers = useLongPress(() => {
-        document.getElementById(`menu-btn-${track.id}`)?.click();
+        document.getElementById(`menu-btn-landscape-${track.id}`)?.click();
     }, handlePlay);
 
     return (
@@ -77,7 +77,7 @@ function LandscapeCard({ track }: { track: Track }) {
                 </div>
                 {/* Menu Button - Hidden on mobile unless hovered on desktop */}
                 <div className="flex-shrink-0 -mt-1 opacity-0 md:group-hover:opacity-100 transition-opacity pointer-events-none md:pointer-events-auto">
-                    <SongActionMenu track={track as any} />
+                    <SongActionMenu track={track as any} menuId={`menu-btn-landscape-${track.id}`} />
                 </div>
             </div>
         </div>

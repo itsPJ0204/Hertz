@@ -35,7 +35,7 @@ function SpeedDialCard({ track }: { track: Track }) {
     };
 
     const longPressHandlers = useLongPress(() => {
-        document.getElementById(`menu-btn-${track.id}`)?.click();
+        document.getElementById(`menu-btn-speeddial-${track.id}`)?.click();
     }, handlePlay);
 
     return (
@@ -54,18 +54,17 @@ function SpeedDialCard({ track }: { track: Track }) {
 
             {/* Menu Button - Hidden on mobile unless hovered on desktop */}
             <div className="absolute top-1 right-1 z-20 opacity-0 md:group-hover:opacity-100 transition-opacity pointer-events-none md:pointer-events-auto">
-                <SongActionMenu track={track as any} />
+                <SongActionMenu track={track as any} menuId={`menu-btn-speeddial-${track.id}`} />
             </div>
 
             {/* Play Overlay */}
-            <button
-                onClick={handlePlay}
-                className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-10"
+            <div
+                className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-10 pointer-events-none"
             >
                 <div className="bg-clay-primary border-2 border-black p-2 rounded-full shadow-[2px_2px_0px_0px_white] hover:scale-110 transition-transform">
                     <Play size={16} fill="black" />
                 </div>
-            </button>
+            </div>
         </div>
     );
 }

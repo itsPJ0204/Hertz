@@ -35,7 +35,7 @@ function QuickPickListItem({ track }: { track: Track }) {
     };
 
     const longPressHandlers = useLongPress(() => {
-        document.getElementById(`menu-btn-${track.id}`)?.click();
+        document.getElementById(`menu-btn-quickpicks-${track.id}`)?.click();
     }, handlePlay);
 
     return (
@@ -59,7 +59,7 @@ function QuickPickListItem({ track }: { track: Track }) {
             </div>
             
             <div className="flex-shrink-0 opacity-0 md:group-hover:opacity-100 transition-opacity ml-2 pointer-events-none md:pointer-events-auto" onClick={e => e.stopPropagation()}>
-                <SongActionMenu track={track as any} />
+                <SongActionMenu track={track as any} menuId={`menu-btn-quickpicks-${track.id}`} />
             </div>
         </div>
     );
