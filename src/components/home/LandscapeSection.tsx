@@ -2,6 +2,8 @@
 
 import { Play } from "lucide-react";
 import { usePlayer } from "@/components/player/PlayerContext";
+import { SongActionMenu } from "@/components/SongActionMenu";
+import { useLongPress } from "@/hooks/useLongPress";
 
 interface Track {
     id: string;
@@ -24,13 +26,22 @@ interface LandscapeSectionProps {
 function LandscapeCard({ track }: { track: Track }) {
     const { play } = usePlayer();
 
+    const handlePlay = (e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        play({
+            ...track,
+            musicinfo: track.musicinfo || { tags: { genres: ['Unknown'], instruments: [], vartags: [] } }
+        });
+    };
+
+    const longPressHandlers = useLongPress(() => {
+        document.getElementById(`menu-btn-${track.id}`)?.click();
+    }, handlePlay);
+
     return (
         <div 
-            onClick={() => play({
-                ...track,
-                musicinfo: track.musicinfo || { tags: { genres: ['Unknown'], instruments: [], vartags: [] } }
-            })}
-            className="w-[280px] md:w-[400px] flex-shrink-0 snap-center group cursor-pointer"
+            {...longPressHandlers}
+            className="w-[280px] md:w-[400px] flex-shrink-0 snap-center group cursor-pointer relative"
         >
             {/* 16:9 Aspect Ratio Container */}
             <div className="relative w-full aspect-video border-2 border-black bg-gray-900 shadow-[4px_4px_0px_0px_black] group-hover:shadow-[2px_2px_0px_0px_black] group-hover:translate-x-[2px] group-hover:translate-y-[2px] transition-all overflow-hidden mb-3">
@@ -55,13 +66,19 @@ function LandscapeCard({ track }: { track: Track }) {
             </div>
 
             {/* Text Below */}
-            <div className="px-1">
-                <h3 className="font-black text-sm md:text-base uppercase italic truncate leading-tight mb-1" title={track.name}>
-                    {track.name}
-                </h3>
-                <p className="text-xs md:text-sm font-bold opacity-60 truncate">
-                    {track.artist_name}
-                </p>
+            <div className="px-1 flex justify-between items-start">
+                <div className="min-w-0 pr-2">
+                    <h3 className="font-black text-sm md:text-base uppercase italic truncate leading-tight mb-1" title={track.name}>
+                        {track.name}
+                    </h3>
+                    <p className="text-xs md:text-sm font-bold opacity-60 truncate">
+                        {track.artist_name}
+                    </p>
+                </div>
+                {/* Menu Button - Hidden on mobile unless hovered on desktop */}
+                <div className="flex-shrink-0 -mt-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity hidden md:block">
+                    <SongActionMenu track={track as any} />
+                </div>
             </div>
         </div>
     );

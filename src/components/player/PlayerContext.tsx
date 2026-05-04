@@ -359,9 +359,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const addToQueue = (track: JamendoTrack) => {
         setQueue(prevQueue => {
             const newQueue = [...prevQueue];
-            // Insert after all user-queued tracks but before autoplay tracks
-            const insertAt = currentIndex + 1 + userQueueCount;
-            newQueue.splice(insertAt, 0, track);
+            // Push to the absolute end of the queue
+            newQueue.push(track);
             return newQueue;
         });
         setUserQueueCount(prev => prev + 1);

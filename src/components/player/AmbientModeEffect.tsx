@@ -49,6 +49,11 @@ export function AmbientModeEffect() {
                 // Create a sharper "heartbeat" peak
                 const beatPeak = normBass > 0.6 ? normBass : smoothBass.current;
 
+                // Time-based hue oscillation (+/- 20 degrees) for color breathing
+                const time = performance.now() / 2000;
+                const hueOffset = Math.sin(time) * 20;
+                const displayHue = hueRef.current + hueOffset;
+
                 // Expose values to CSS Variables
                 // Base intensity that spikes heavily on beat (deep breaths)
                 const intensity = Math.max(0.5, beatPeak * 4.0);
@@ -56,7 +61,7 @@ export function AmbientModeEffect() {
 
                 document.documentElement.style.setProperty('--ambient-intensity', intensity.toFixed(3));
                 document.documentElement.style.setProperty('--ambient-spread', spread.toFixed(3));
-                document.documentElement.style.setProperty('--ambient-hue', hueRef.current.toFixed(1));
+                document.documentElement.style.setProperty('--ambient-hue', displayHue.toFixed(1));
             }
         };
 

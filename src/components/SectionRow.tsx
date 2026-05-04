@@ -6,6 +6,7 @@ import { usePlayer } from "./player/PlayerContext";
 import { toggleLike } from "@/actions/toggleLike";
 import { useTransition, useState } from "react";
 import { SongActionMenu } from "./SongActionMenu";
+import { useLongPress } from "@/hooks/useLongPress";
 
 interface Track {
     id: string;
@@ -52,9 +53,22 @@ function TrackCard({ track }: { track: Track }) {
         });
     };
 
+    const handlePlay = (e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        play({
+            ...track,
+            musicinfo: track.musicinfo || { tags: { genres: ['Unknown'], instruments: [], vartags: [] } }
+        });
+    };
+
+    const longPressHandlers = useLongPress(() => {
+        document.getElementById(`menu-btn-${track.id}`)?.click();
+    }, handlePlay);
+
     return (
         <div
-            className="w-[140px] min-w-[140px] md:w-[180px] md:min-w-[180px] bg-white border-2 border-black flex-shrink-0 snap-center group hover:-translate-y-1 transition-transform shadow-[2px_2px_0px_0px_black] md:shadow-[2px_2px_0px_0px_black] hover:shadow-[4px_4px_0px_0px_black]"
+            {...longPressHandlers}
+            className="w-[140px] min-w-[140px] md:w-[180px] md:min-w-[180px] bg-white border-2 border-black flex-shrink-0 snap-center group hover:-translate-y-1 transition-transform shadow-[2px_2px_0px_0px_black] md:shadow-[2px_2px_0px_0px_black] hover:shadow-[4px_4px_0px_0px_black] cursor-pointer relative"
         >
             {/* Image */}
             <div className="relative aspect-square border-b-2 border-black overflow-hidden bg-gray-100">
@@ -65,13 +79,8 @@ function TrackCard({ track }: { track: Track }) {
                 />
                 {/* Play Overlay */}
                 <button
-                    onClick={() => {
-                        play({
-                            ...track,
-                            musicinfo: track.musicinfo || { tags: { genres: ['Unknown'], instruments: [], vartags: [] } }
-                        });
-                    }}
-                    className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                    onClick={handlePlay}
+                    className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-10"
                 >
                     <div className="bg-clay-primary border-2 border-black p-2 md:p-3 rounded-full shadow-[2px_2px_0px_0px_white] hover:scale-110 transition-transform">
                         <Play size={20} fill="black" />
@@ -89,8 +98,9 @@ function TrackCard({ track }: { track: Track }) {
                         {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
                     </span>
                     {/* Mini Actions */}
-                    <div className="flex gap-2 items-center">
-                        <div onClick={e => e.stopPropagation()} className="opacity-50 hover:opacity-100 transition-opacity">
+                    <div className="flex gap-2 items-center z-20">
+                        {/* Hidden on mobile, triggered by long press */}
+                        <div onClick={e => e.stopPropagation()} className="opacity-50 hover:opacity-100 transition-opacity hidden md:block">
                             <SongActionMenu track={track as any} />
                         </div>
                         <button

@@ -3,6 +3,7 @@
 import { Play, MoreVertical } from "lucide-react";
 import { usePlayer } from "@/components/player/PlayerContext";
 import { SongActionMenu } from "@/components/SongActionMenu";
+import { useLongPress } from "@/hooks/useLongPress";
 
 interface Track {
     id: string;
@@ -25,12 +26,21 @@ interface QuickPicksSectionProps {
 function QuickPickListItem({ track }: { track: Track }) {
     const { play } = usePlayer();
 
+    const handlePlay = (e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        play({
+            ...track,
+            musicinfo: track.musicinfo || { tags: { genres: ['Unknown'], instruments: [], vartags: [] } }
+        });
+    };
+
+    const longPressHandlers = useLongPress(() => {
+        document.getElementById(`menu-btn-${track.id}`)?.click();
+    }, handlePlay);
+
     return (
         <div 
-            onClick={() => play({
-                ...track,
-                musicinfo: track.musicinfo || { tags: { genres: ['Unknown'], instruments: [], vartags: [] } }
-            })}
+            {...longPressHandlers}
             className="group flex items-center justify-between w-[280px] md:w-[360px] p-2 hover:bg-black/5 rounded cursor-pointer transition-colors border-b border-black/5 last:border-0"
         >
             <div className="flex items-center gap-3 min-w-0">
@@ -48,7 +58,7 @@ function QuickPickListItem({ track }: { track: Track }) {
                 </div>
             </div>
             
-            <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ml-2" onClick={e => e.stopPropagation()}>
+            <div className="flex-shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity ml-2 hidden md:block" onClick={e => e.stopPropagation()}>
                 <SongActionMenu track={track as any} />
             </div>
         </div>

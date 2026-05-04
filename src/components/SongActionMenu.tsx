@@ -86,6 +86,7 @@ export function SongActionMenu({ track }: { track: JamendoTrack }) {
     return (
         <div onClick={e => e.stopPropagation()}>
             <button
+                id={`menu-btn-${track.id}`}
                 ref={buttonRef}
                 onClick={(e) => { e.preventDefault(); setIsOpen(!isOpen); }}
                 className="p-2 hover:bg-black/10 rounded-full transition-colors text-gray-500 hover:text-black"
